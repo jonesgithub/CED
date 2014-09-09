@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="utf-8">
+    <title>CED工具包</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Loading Bootstrap -->
+    <link href="/static/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <!-- CED Theme -->
+    <link href="/static/css/theme.css" rel="stylesheet">
+
+    <!-- Loading Flat UI -->
+    <link href="/static/css/flat-ui.css" rel="stylesheet">
+
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+    <!--[if lt IE 9]>
+      <script src="/static/js/html5shiv.js"></script>
+      <script src="/static/js/respond.min.js"></script>
+    <![endif]-->
+    <script src="/static/js/jquery-1.8.3.min.js"></script>
+    <script language="javascript">
+
+        //$(window).bind('beforeunload',function(){ return '您可能有同步任务正在进行,确定这么做吗！？'; });
+
+        $(document).ready(function(){
+
+            $(".viewprocess").attr("disabled","true");
+
+            //动态生成
+            $(".getenvdetailinfo").click(function(){
+               //动画效果
+               $("#envdetailpanel").fadeOut("5000");
+               tr="";
+                $.getJSON("/tools/codesync/ajaxgetenvdetail/"+$(this).val(), function(data){
+                    $.each(data.Configs,function(i,item){
+                        tdEnvId="<td>"+data.Configs[i].EnvId+"</td>";
+                        tdMachineName="<td>"+data.Configs[i].MachineName+"</td>";
+                        tdDomainName="<td>"+data.Configs[i].DomainName+"</td>";
+                        tdIPAddress="<td>"+data.Configs[i].IPAddress+"</td>";
+                        tdstartsync="<td><button type='button' class='btn btn-danger btn-xs sgsyncnow'><span class='glyphicon glyphicon-refresh'></span> 开始同步</button></td>";
+                        tdsyncsource="<td><div class='btn-group'><button type='button' class='btn btn-xs btn-success dropdown-toggle' data-toggle='dropdown'>同步源 <span class='caret'></span></button><ul class='dropdown-menu' role='menu'><li><a href='#'>FAT2</a></li></ul></div></td>";
+                        //tdprocess="<td><div class='progress'><div class='progress-bar' style='width: 50%;'></div></div></td>";
+                        tdview=" <td><button type='button' class='btn btn-warning btn-xs sgviewprocess'><span class='glyphicon glyphicon-eye-open'></span> 查看</button></td>";
+                        tr=tr+"<tr>"+tdEnvId+tdMachineName+tdDomainName+tdIPAddress+tdstartsync+tdsyncsource+tdview+"</tr>";
+                    });
+                    //显示数据
+                    $("#envdetailpanel").fadeIn("5000");
+                    //只给tbody更新数据
+                    $("#envdetailtable tbody").html(tr);
+                });
+            });
+
+            //动态绑定同步事件
+            $('.sgsyncnow').live('click',function(){
+                    //绑定unload事件
+                    var thisDiv=this;
+                    //给提示
+                    this.innerHTML="正在同步中...请稍等";
+                    $(".sgsyncnow").attr("disabled","true"); //禁用其他按钮
+                    var domainname=$(this).parent().prev("td").prev("td").text();
+                    $(window).bind('beforeunload',function(){ return '警告！您有同步任务正在进行,离开页面可能丢失进度,确定要离开吗？'; });
+                    $.post('/tools/codesync/ajaxstartsgsync/',{'sitename':domainname},function(result){
+                        if(result=="同步完成!"){
+                            thisDiv.innerHTML=result;
+                            alert(domainname+" 站点同步完成！");
+                            $(".sgsyncnow").removeAttr("disabled");
+                            $(window).unbind('beforeunload'); //解除事件绑定
+                        }
+                        else{
+                             thisDiv.innerHTML=result;
+                             alert(domainname+" 站点同步失败！");
+                             $(".sgsyncnow").removeAttr("disabled");
+                             $(window).unbind('beforeunload');//解除事件绑定
+                        }
+                    });
+
+            });
+
+            $('.allenvsync').live('click',function(){
+                    //给提示
+                    alert("暂不支持整个环境同步!");
+            });
+
+        });
+    </script>
+
+</head>
+<body>
+
+<!-- 顶部导航条 -->
+    <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+        <a class="navbar-brand navbar-left" href="#">CODESYNC</a>
+        <ul class="nav navbar-nav">
+        <li class="active"><a href="/" title="返回CED首页"><span class="glyphicon glyphicon-home"></span>CED</a></li>
+        <li><a href="/" title="查看日志"><span class="glyphicon glyphicon-eye-open"></span>查看日志</a></li>
+        <li><a href="/" title="建立定时同步"><span class="glyphicon glyphicon-time"></span>建立定时同步</a></li>
+        <li><a href="/" title="建立定时同步"><span class="glyphicon glyphicon-list"></span>版本TimeLine</a></li>
+        </ul>
+    </nav>
+
+   <!-- 操作区 -->
+    <div id="codesync-maincontent">
+
+    <div class="panel panel-info">
+      <!-- Default panel contents -->
+      <div class="panel-heading">控制面板-FAT环境集群列表</div>
+      <div class="panel-body">
+        <p>CODESYNC目前只支持FAT环境的相关操作,有任何问题请联系管理员:tygong@Ctrip.com</p>
+      </div>
+      <!-- Env Table -->
+      <table class="table">
+        <thead>
+          <tr>
+            <th>EnvSubId</th>
+            <th>EnvSubName</th>
+            <th>EnvSOAName</th>
+            <th>EnvSubDes</th>
+            <th>EnvId</th>
+            <th>EnvCId</th>
+            <th>详情信息</th>
+            <th>整个环境同步</th>
+            <th>选择同步源</th>
+            <th>实时监控</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for info in allinfolist %}
+          <tr>
+            <td>{{ info.EnvSubId }}</td>
+            <td>{{ info.EnvSubName }}</td>
+            <td>{{ info.EnvSOAName }}</td>
+            <td>{{ info.EnvSubDes }}</td>
+            <td>{{ info.EnvId }}</td>
+            <td>{{ info.EnvCId }}</td>
+            <td>
+            <button type="button" class="btn btn-info btn-xs getenvdetailinfo" value="{{ info.EnvCId }}">
+                <span class="glyphicon glyphicon-th"></span> 获取部署详情信息
+            </button>
+            </td>
+            <td>
+            <button type="button" class="btn btn-danger btn-xs allenvsync">
+                <span class="glyphicon glyphicon-refresh"></span> 整个环境同步
+            </button>
+            </td>
+            <td>
+                <div class="btn-group">
+                <button type="button" class="btn btn-xs btn-success dropdown-toggle sgenvsr" data-toggle="dropdown">
+                    同步源 <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu" role="menu">
+                <li><a href="#">FAT2</a></li>
+                </ul>
+                </div>
+            </td>
+            <td>
+                <button type="button" class="btn btn-warning btn-xs viewprocess">
+                <span class="glyphicon glyphicon-eye-open"></span> 查看
+            </button>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="panel panel-success" id="envdetailpanel">
+      <!-- Default panel contents -->
+      <div class="panel-heading">集群部署详情</div>
+      <div class="panel-body">
+        <p>在这里进行单个站点的同步操作</p>
+      </div>
+      <!-- Env Detail Table -->
+      <table class="table" id="envdetailtable">
+        <thead>
+          <tr>
+            <th>EnvId</th>
+            <th>MachineName</th>
+            <th>DomainName</th>
+            <th>IPAddress</th>
+            <th>单个站点同步</th>
+            <th>选择同步源</th>
+            <th>实时监控</th>
+          </tr>
+        </thead>
+        <tbody>
+        </tbody>
+      </table>
+    </div>
+
+    </div>
+
+<!-- Load JS here for greater good =============================-->
+    <script src="/static/js/jquery-ui-1.10.3.custom.min.js"></script>
+    <script src="/static/js/jquery.ui.touch-punch.min.js"></script>
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/bootstrap-select.js"></script>
+    <script src="/static/js/bootstrap-switch.js"></script>
+    <script src="/static/js/flatui-checkbox.js"></script>
+    <script src="/static/js/flatui-radio.js"></script>
+    <script src="/static/js/jquery.tagsinput.js"></script>
+    <script src="/static/js/jquery.placeholder.js"></script>
+
+</body>
+</html>
