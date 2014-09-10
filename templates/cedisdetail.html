@@ -1,0 +1,169 @@
+{% extends "homepage.html" %}
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+{% block head %}
+  <head>
+    <meta charset="utf-8">
+    <title>CED</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Loading Bootstrap -->
+    <link href="/static/bootstrap/css/bootstrap.css" rel="stylesheet">
+    <!-- CED Theme -->
+    <link href="/static/css/theme.css" rel="stylesheet">
+
+    <!-- Loading Flat UI -->
+    <link href="/static/css/flat-ui.css" rel="stylesheet">
+
+    <link rel="shortcut icon" href="/static/images/favicon.ico">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+    <!--[if lt IE 9]>
+      <script src="/static/js/html5shiv.js"></script>
+      <script src="/static/js/respond.min.js"></script>
+    <![endif]-->
+    <script src="/static/ckeditor/ckeditor/ckeditor.js"></script>
+    <script src="/static/js/jquery-1.8.3.min.js"></script>
+    <script type="text/javascript">
+    $(document).ready(function(){
+        $("#submitcomment").click(function(){
+            //CKEditor内容获取
+            var content= CKEDITOR.instances.id_commentcontent.getData();
+            //AJAX表单提交
+            $.post("addnewcomment/",{ commentcontent:content },
+            function(data){
+                if(data=="评论提交成功！"){
+                $("#commentform").append(
+                "<div class='alert alert-success alert-dismissible' role='alert'>" +
+                "<button type='button' class='close' data-dismiss='alert'>" +
+                "<span aria-hidden='true'>&times;</span><span class='sr-only'>关闭</span></button>" +
+                ""+data+"刷新页面即可看到你的评论。"+"</div>"
+                )
+                $(".alert").fadeOut(1000);
+                }
+                else{
+                $("#commentform").append(
+                "<div class='alert alert-danger alert-dismissible' role='alert'>" +
+                "<button type='button' class='close' data-dismiss='alert'>" +
+                "<span aria-hidden='true'>&times;</span><span class='sr-only'>关闭</span></button>" +
+                ""+data+"</div>"
+                )
+                $(".alert").fadeOut(1000);
+                }
+            });
+        });
+    });
+    </script>
+  </head>
+{% endblock %}
+  <body>
+
+      {% block mainbody %}
+    <!-- mainbody -->
+    <div class="container-fluid">
+      <div class="row">
+        {% block sidenav %}{{ block.super }}{% endblock %}
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">快速导航</h1>
+            <ol class="breadcrumb">
+                <li><a href="/">首页</a></li>
+                <li class="active">正在处理 #{{ thiscedis.issueid }} 问题单</li>
+            </ol>
+
+          <div class="row placeholders">
+          </div>
+          <h2 class="sub-header">问题单 #{{ thiscedis.issueid }} 的信息</h2>
+          <div class="table-responsive">
+            <table class="table table-striped">
+                <div class="list-group issuedetail">
+                {% ifequal thiscedis.issuestatus 1 %}
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                    <button class="btn btn-embossed btn-primary btn-xs">通知对方已解决</button>
+                    </a>
+                    {% else %}
+                        {% ifequal thiscedis.issuestatus 4 %}
+                            <a class="list-group-item">
+                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                            <button class="btn btn-embossed btn-primary btn-xs">再次通知对方已解决</button>
+                            </a>
+                            {% else %}
+                                {% ifequal thiscedis.issuestatus 2 %}
+                                    <a class="list-group-item">
+                                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                                    </a>
+                                    {% else %}
+                                        {% ifequal thiscedis.issuestatus 3 %}
+                                            <a class="list-group-item">
+                                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                                            </a>
+                                        {% endifequal %}
+                                {% endifequal %}
+                        {% endifequal %}
+                {% endifequal %}
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-file"></span>概述</h4>
+                    <p class="list-group-item-text">{{ thiscedis.issuetitle }}</p>
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-th-large"></span>详细描述</h4>
+                    <p class="list-group-item-text">{{ thiscedis.issuedetail | safe }}</p>
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-tag"></span>问题类型</h4>
+                    <p class="list-group-item-text"><span class="label label-danger">{{ thiscedis.issuetypes }}</span></p>
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-screenshot"></span>关联线索信息</h4>
+                    <p class="list-group-item-text">
+                    {% for ikey in thiscedis.issuekey.all %}
+                        <span class="label label-info">{{ ikey }}</span>
+                    {% endfor %}
+                    </p>
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>提交人</h4>
+                    <p class="list-group-item-text">{{ thiscedis.issuesubman }}</p>
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>委托处理人</h4>
+                        {% for recman in thiscedis.issuereceivemans.all %}
+                            <p class="list-group-item-text">{{ recman }}</p>
+                        {% endfor %}
+                    </a>
+                    <a class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-time"></span>最近修改时间</h4>
+                    <p class="list-group-item-text">{{ thiscedis.issuecreatetime | date:"Y-m-d H:i:s"  }}</p>
+                    </a>
+                </div>
+            </table>
+          </div>
+
+          <h2 class="sub-header">#{{ thiscedis.issueid }} 问题单下的评论</h2>
+          <div class="table-responsive">
+            <div class="table table-striped">
+                <div class="list-group issuedetail">
+                    {% for comment in thiscedis.issuecomments.all %}
+                    <div class="list-group-item">
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>{{ comment.commentman }} - <span style="font-size: 12px;">{{ comment.commentdate | date:"Y-m-d H:i:s"  }}</span></h4>
+                    <div class="list-group-item-text commentcontent">{{ comment.comment | safe }}</div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+          </div>
+
+         <h2 class="sub-header">+ 添加评论</h2>
+
+        <form id="commentform">{% csrf_token %}
+         {{ commentform.as_p }}
+         <input type="button" id="submitcomment" class="btn btn-default" style="margin-top: 15px;width: 100%;" value="提交评论">
+        </form>
+        </div>
+      </div>
+    </div>
+
+    {% endblock %}
+
+  </body>
+</html>
