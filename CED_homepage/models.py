@@ -126,7 +126,7 @@ def _cedissue_event_handle(sender,instance,**kwargs):
     thisissue=instance #实例化发送者
     if thisissue.issuestatusname==u'待确认': #如果是待确认,由问题单处理人发送给subman
         thisevent=ced_events(
-            user_s=thisissue.issuereceivemans.all()[0], #只允许选择一个环境处理人
+            user_s=thisissue.issuereceivemans.all()[0], #只允许选择一个环境处理人/永远为当前那个
             event_object=thisissue,
             eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】解决了问题单【%s】，请及时反馈！</a>" %
                   (thisissue.issuedetailurl,thisissue.issuereceivemans.all()[0],thisissue.issuetitle[:10]+u"......")

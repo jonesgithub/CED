@@ -74,7 +74,7 @@
       <div class="row">
         {% block sidenav %}{{ block.super }}{% endblock %}
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">快速导航</h1>
+          <h1 class="page-header">当前位置</h1>
             <ol class="breadcrumb">
                 <li><a href="/">首页</a></li>
                 <li class="active">正在处理 #{{ thiscedis.issueid }} 问题单</li>
@@ -82,7 +82,7 @@
 
           <div class="row placeholders">
           </div>
-          <h2 class="sub-header">问题单 #{{ thiscedis.issueid }} 的信息</h2>
+          <h1 class="page-header">问题单 #{{ thiscedis.issueid }} 的详情内容</h1>
           <div class="table-responsive">
             <table class="table table-striped">
                 <div class="list-group issuedetail">
@@ -149,7 +149,7 @@
             </table>
           </div>
 
-          <h2 class="sub-header">#{{ thiscedis.issueid }} 问题单下的评论</h2>
+          <h1 class="page-header">#{{ thiscedis.issueid }} 问题单的评论内容</h1>
           <div class="table-responsive">
             <div class="table table-striped">
                 <div class="list-group issuedetail">
@@ -162,8 +162,6 @@
                 </div>
             </div>
           </div>
-
-         <h2 class="sub-header">+ 添加评论</h2>
 
         <form id="commentform">{% csrf_token %}
          {{ commentform.as_p }}
