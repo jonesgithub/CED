@@ -36,3 +36,7 @@ body{ padding-bottom: 150px; }
 
 #envdetailpanel{ display: none; }
 .commentcontent img{ max-width: 100%; }
+
+.navbar,.sidebar,.container-fluid{ font-family:"微软雅黑","黑体",sans-serif; }
+.emailnotity-no,.delissue-no{ cursor: not-allowed; }
+.emailnotity,.delissue{ cursor: pointer; }

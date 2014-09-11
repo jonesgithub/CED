@@ -122,15 +122,58 @@ class ced_events(models.Model):
 #注册监听issues通知事件
 @receiver(post_save,sender=ced_issues,dispatch_uid="ced_issue_update")
 def _cedissue_event_handle(sender,instance,**kwargs):
+    """根据单子状态决定通知行为"""
     thisissue=instance #实例化发送者
-    thisevent=ced_events(
-        user_s=thisissue.issuesubman,
-        event_object=thisissue,
-        eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【#%s】问题单被【%s】置为【%s】</a>" %
-                  (thisissue.issuedetailurl,thisissue.issueid,thisissue.issuesubman,thisissue.issuestatusname)
+    if thisissue.issuestatusname==u'待确认': #如果是待确认,由问题单处理人发送给subman
+        thisevent=ced_events(
+            user_s=thisissue.issuereceivemans.all()[0], #只允许选择一个环境处理人
+            event_object=thisissue,
+            eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】解决了问题单【%s】，请及时反馈！</a>" %
+                  (thisissue.issuedetailurl,thisissue.issuereceivemans.all()[0],thisissue.issuetitle[:10]+u"......")
+            )
         )
-    )
-    thisevent.save() #保存这条事件,顺序在前
-    #加入事件收取人
-    for revman in thisissue.issuereceivemans.all():
-        thisevent.user_r.add(revman)
+        thisevent.save() #保存这条事件,顺序在前
+        #加入事件收取人
+        #for revman in thisissue.issuereceivemans.all():
+            #thisevent.user_r.add(revman)
+        thisevent.user_r.add(thisissue.issuesubman) #事件收取人为问题提交人
+
+    elif thisissue.issuestatusname==u'已解决':
+        thisevent=ced_events(
+            user_s=thisissue.issuesubman,
+            event_object=thisissue,
+            eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】确认了问题单【%s】已解决！</a>" %
+                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+            )
+        )
+        thisevent.save() #保存这条事件,顺序在前
+        #加入事件收取人
+        for revman in thisissue.issuereceivemans.all():
+            thisevent.user_r.add(revman)
+
+    elif thisissue.issuestatusname==u'被驳回':
+        thisevent=ced_events(
+            user_s=thisissue.issuesubman,
+            event_object=thisissue,
+            eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】驳回了问题单【%s】，请尝试再次解决！</a>" %
+                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+            )
+        )
+        thisevent.save() #保存这条事件,顺序在前
+        #加入事件收取人
+        for revman in thisissue.issuereceivemans.all():
+            thisevent.user_r.add(revman)
+
+    else:
+        #新建状态直接写事件
+        thisevent=ced_events(
+            user_s=thisissue.issuesubman,
+            event_object=thisissue,
+            eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】提交了一个新的问题单【%s】！</a>" %
+                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+            )
+        )
+        thisevent.save() #保存这条事件,顺序在前
+        #加入事件收取人
+        for revman in thisissue.issuereceivemans.all():
+            thisevent.user_r.add(revman)

@@ -21,6 +21,32 @@
       <script src="/static/js/html5shiv.js"></script>
       <script src="/static/js/respond.min.js"></script>
     <![endif]-->
+   <script src="/static/js/jquery-1.8.3.min.js"></script>
+   <script type="text/javascript">
+    $(document).ready(function(){
+
+        $(".emailnotity-no").click(function(){
+            alert("不被允许的操作!");
+        });
+
+        $(".delissue-no").click(function(){
+            alert("不被允许的操作!");
+        });
+
+        $(".emailnotity").click(function(){
+            //请求发送邮件
+            alert("发送邮件");
+        });
+
+        $(".delissue").click(function(){
+            //隐藏掉
+            $(this).parent().parent().hide(1000);
+        });
+
+
+    });
+    </script>
+
   </head>
 {% endblock %}
   <body>
@@ -31,25 +57,25 @@
         <a class="navbar-brand navbar-left" href="/">CED</a>
         <ul class="nav navbar-nav">
         <li class="active"><a href="/"><span class="glyphicon glyphicon-home"></span>首页</a></li>
-        <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-eye-open"></span>UAT服务器资源监控</a></li>
+        <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-eye-open"></span>环境监控</a></li>
         <li class="dropdown">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-comment"></span>我的消息<span class="navbar-new">{{ myeventsnum }}</span></a>
+        {% if hasEvent %}{% else %}<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-comment"></span>我的消息<span class="navbar-new">{{ myeventsnum }}</span></a>{% endif %}
         <ul class="dropdown-menu" role="menu">
             {% for myevent in myevents %}
             <li>{{ myevent.eventdes | safe }}</li>
             {% endfor %}
-            <li><a href="/allmyevents">查看所有消息</a></li>
+            <li><a href="/allmyevents">查看所有消息(这里只显示最新的10条)</a></li>
           </ul>
         </li>
-        <li><a href="#"><span class="glyphicon glyphicon-stats"></span>统计与展示</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-stats"></span>数据展示</a></li>
         <li><a href="#"><span class="glyphicon glyphicon-user"></span>英雄榜</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span>管理与配置</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span>管理配置</a></li>
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th-list"></span>环境工具包<span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th-list"></span>治理工具包<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
             <li><a href="#">核心服务预警监测</a></li>
             <li><a href="#">问题URL自助诊断</a></li>
-            <li><a href="/tools/codesync/" target="_blank">环境代码同步</a></li>
+            <li><a href="/tools/codesync/" target="_blank">环境代码同步工具</a></li>
             <li><a href="http://10.3.6.170:8091/" target="_blank">服务器时间修改</a></li>
             <li><a href="#">All IN ONE 查看</a></li>
             <li class="divider"></li>
@@ -79,7 +105,6 @@
             <li><a href="/categories/3"><span class="glyphicon glyphicon-ok-sign"></span>已解决</a></li>
             <li><a href="/categories/2"><span class="glyphicon glyphicon-question-sign"></span>待确认</a></li>
             <li><a href="/categories/4"><span class="glyphicon glyphicon-remove-sign"></span>被驳回</a></li>
-            <li><a href="#"><span class="glyphicon glyphicon-trash"></span>回收站</a></li>
           </ul>
         </div>
        {% endblock %}
@@ -117,7 +142,7 @@
                 </div>
             </div>
             <div class="col-xs-6 col-sm-3 placeholder">
-                 <div class="panel panel-danger">
+                 <div class="panel panel-warning">
                     <div class="panel-heading">
                     <h3 class="panel-title">被驳回的问题单</h3>
                     </div>
@@ -147,7 +172,7 @@
                 <tr>
                   <td>{{ issue.issueid }}</td>
                   <td>{{ issue.issuesubman }}</td>
-                  <td>{{ issue.issuetitle }}</td>
+                  <td>{{ issue.issuetitle | truncatechars:'20' }}</td>
                   <td>{{ issue.issuecreatetime | date:"Y-m-d H:i:s"  }}</td>
                   <td>
                       {% ifequal issue.issuestatus 1 %}
@@ -167,7 +192,21 @@
                       {% endifequal %}
                   </td>
                   <td><a href="{{ issue.issuedetailurl }}" title="查看 {{ issue.issueid }} 问题单的详情信息" id="viewdetail"><button class="btn btn-embossed btn-primary btn-xs"><span class="glyphicon glyphicon-list-alt"></span>查看详情</button></a></td>
-                  <td><a href="#" title="提醒对方处理"><span class="glyphicon glyphicon-envelope"></span></a><a href="#" title="放入回收站"><span class="glyphicon glyphicon-trash"></span></a></td>
+                  {% ifequal issue.issuestatus 1 %}
+                      <td><a title="邮件提醒对方" class="emailnotity-no"><span class="glyphicon glyphicon-envelope"></span></a><a title="删除该问题单" class="delissue-no"><span class="glyphicon glyphicon-trash"></span></a></td>
+                       {% else %}
+                          {% ifequal issue.issuestatus 3 %}
+                              <td><a title="邮件提醒对方" class="emailnotity-no"><span class="glyphicon glyphicon-envelope"></span></a><a title="删除该问题单" class="delissue"><span class="glyphicon glyphicon-trash"></span></a></td>
+                              {% else %}
+                                {% ifequal issue.issuestatus 2 %}
+                                    <td><a title="邮件提醒对方" class="emailnotity"><span class="glyphicon glyphicon-envelope"></span></a><a title="删除该问题单" class="delissue-no"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    {% else %}
+                                        {% ifequal issue.issuestatus 4 %}
+                                            <td><a title="邮件提醒对方" class="emailnotity-no"><span class="glyphicon glyphicon-envelope"></span></a><a title="删除该问题单" class="delissue-no"><span class="glyphicon glyphicon-trash"></span></a></td>
+                                    {% endifequal %}
+                                {% endifequal %}
+                           {% endifequal %}
+                      {% endifequal %}
                 </tr>
               {% endfor %}
               </tbody>
@@ -180,7 +219,6 @@
 
     {% block footer %}
     <!-- Load JS here for greater good =============================-->
-    <script src="/static/js/jquery-1.8.3.min.js"></script>
     <script src="/static/js/jquery-ui-1.10.3.custom.min.js"></script>
     <script src="/static/js/jquery.ui.touch-punch.min.js"></script>
     <script src="/static/js/bootstrap.min.js"></script>

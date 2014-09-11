@@ -12,6 +12,7 @@ def homepage(request):
     #获取所有issues
     allissues=ced_issues.objects.all()
     allevents=ced_events.objects.all()
+    hasNoEvent=False
 
     myevents=[] #收集我的事件
     for event in allevents:
@@ -20,6 +21,9 @@ def homepage(request):
             myevents.append(event)
 
     myeventsnum=len(myevents) #事件总数
+
+    if myeventsnum==0:
+        hasNoEvent=True
 
     #获取相关数据
     issue_done_num=allissues.filter(issuestatus=3).count()
@@ -35,7 +39,8 @@ def homepage(request):
             'issuewait':issue_wait_num,
             'issuerollback':issue_rollback_num,
             'myevents':myevents[0:10],
-            'myeventsnum':myeventsnum
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent
         }
 
     )
@@ -46,6 +51,8 @@ def redis_io_info(request):
 
 #详情页处理
 def ced_issue_detail(request,cedis):
+    hasNoEvent=False
+
     #获取到id
     cedisid=cedis[5:]
     allevents=ced_events.objects.all()
@@ -58,6 +65,8 @@ def ced_issue_detail(request,cedis):
         if len(event.user_r.all().filter(username=request.user.username))!=0:
             myevents.append(event)
     myeventsnum=len(myevents) #事件总数
+    if myeventsnum==0:
+        hasNoEvent=True
     cedisone=ced_issues.objects.get(id=cedisid)
     return render_to_response("cedisdetail.html",
         {
@@ -65,11 +74,14 @@ def ced_issue_detail(request,cedis):
             'myevents':myevents[0:10],
             'myeventsnum':myeventsnum,
             'commentform':cF,
+            'hasEvent':hasNoEvent
         }
     )
 
 #显示我的所有事件列表
 def ced_show_allmyevents(request):
+    hasNoEvent=False
+
     #获取我所有的事件信息
     allevents=ced_events.objects.all()
     myevents=[] #收集我的事件
@@ -79,9 +91,14 @@ def ced_show_allmyevents(request):
             myevents.append(event)
     myeventsnum=len(myevents) #事件总数
 
+    if myeventsnum==0:
+        hasNoEvent=True
+
     return render_to_response("myevents.html",{
-            'myevents':myevents[0:10], #只取最新10条记录
-            'myeventsnum':myeventsnum
+            'myevents':myevents[0:10],
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent,
+            'myallevents':myevents,
     })
 
 #Ajax推送评论消息
@@ -108,6 +125,9 @@ def ced_ajax_addnewcomment(request,cedis):
 
 #分类issue筛选
 def show_cat_issues(request,cattype):
+
+    hasNoEvent=False
+
     """分类显示"""
     try:
         u_issue_status=int(cattype)
@@ -125,6 +145,9 @@ def show_cat_issues(request,cattype):
 
         myeventsnum=len(myevents) #事件总数
 
+        if myeventsnum==0:
+            hasNoEvent=True
+
         #获取相关数据
         issue_done_num=allissues.filter(issuestatus=3).count()
         issue_wait_num=allissues.filter(issuestatus=2).count()
@@ -140,7 +163,8 @@ def show_cat_issues(request,cattype):
                 'issuewait':issue_wait_num,
                 'issuerollback':issue_rollback_num,
                 'myevents':myevents[0:10],
-                'myeventsnum':myeventsnum
+                'myeventsnum':myeventsnum,
+                'hasEvent':hasNoEvent
             }
 
         )
@@ -149,8 +173,33 @@ def show_cat_issues(request,cattype):
 
 
 #通知对方的实现,ajax
-def ced_ajax_notify(request):
-    """通知"""
+def ced_ajax_notify(request,cedis):
+    """通知对方"""
+    if request.method=="POST":
+        thisissue_id=cedis[5:]
+        thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
+        thisissue_current_status=thisissue.issuestatus
+        if thisissue_current_status==2 or thisissue_current_status==3:
+            return HttpResponse(u"当前状态无需通知！")
+        else:
+            try:
+                thisissue.issuestatus=2 #置为待确认
+                thisissue.save() #保存并触发事件通知
+            except:
+                return HttpResponse(u"通知过程中发生异常")
+            else:
+                return HttpResponse(u"通知成功,请等待对方确认!")
+    else:
+        return HttpResponse(u"非法请求")
+
+
+#搜索直达功能
+def ced_search_issue(request):
     pass
 
 
+#ajax定时拉取事件
+def ced_ajax_get_eventlists(request):
+    """返回JSON数据,给前端解析"""
+    if request.method=="POST":
+        pass

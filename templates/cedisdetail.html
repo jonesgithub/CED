@@ -26,6 +26,16 @@
     <script src="/static/js/jquery-1.8.3.min.js"></script>
     <script type="text/javascript">
     $(document).ready(function(){
+
+        //绑定通知事件
+        $("#notifybutton").click(function(){
+            $.post("notifysubman/",{},function(result){
+                alert(result);
+                $("#notifybutton").hide(500);
+            });
+        });
+
+
         $("#submitcomment").click(function(){
             //CKEditor内容获取
             var content= CKEDITOR.instances.id_commentcontent.getData();
@@ -78,24 +88,24 @@
                 <div class="list-group issuedetail">
                 {% ifequal thiscedis.issuestatus 1 %}
                     <a class="list-group-item">
-                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
-                    <button class="btn btn-embossed btn-primary btn-xs">通知对方已解决</button>
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-danger">{{ thiscedis.issuestatusname }}</span></h4>
+                    <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">通知对方已解决</button>
                     </a>
                     {% else %}
                         {% ifequal thiscedis.issuestatus 4 %}
                             <a class="list-group-item">
-                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
-                            <button class="btn btn-embossed btn-primary btn-xs">再次通知对方已解决</button>
+                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-warning">{{ thiscedis.issuestatusname }}</span></h4>
+                            <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">再次通知对方已解决</button>
                             </a>
                             {% else %}
                                 {% ifequal thiscedis.issuestatus 2 %}
                                     <a class="list-group-item">
-                                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-info">{{ thiscedis.issuestatusname }}</span></h4>
                                     </a>
                                     {% else %}
                                         {% ifequal thiscedis.issuestatus 3 %}
                                             <a class="list-group-item">
-                                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：{{ thiscedis.issuestatusname }}</h4>
+                                            <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-success">{{ thiscedis.issuestatusname }}</span></h4>
                                             </a>
                                         {% endifequal %}
                                 {% endifequal %}

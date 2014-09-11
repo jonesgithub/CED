@@ -16,7 +16,9 @@ urlpatterns = patterns('',
     url(r'^allmyevents/$',views.ced_show_allmyevents),
     url(r'^ckeditor/', include('ckeditor.urls')),
     url(r'^cedis/(?P<cedis>\w+)/detail/addnewcomment/$',views.ced_ajax_addnewcomment),
+    url(r'^cedis/(?P<cedis>\w+)/detail/notifysubman/$',views.ced_ajax_notify), #notity the subman
     url(r'^categories/(\d+)$',views.show_cat_issues),
+    url(r'^geteventlists/$',views.ced_ajax_get_eventlists),
 
     #AI
     url(r'^tools/codesync/$',codesync_views.codesync_home_page),
