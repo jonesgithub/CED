@@ -14,13 +14,13 @@ def homepage(request):
     allevents=ced_events.objects.all()
     hasNoEvent=False
 
-    myevents=[] #收集我的事件
+    myevents=[] # 收集我的事件
     for event in allevents:
         #只显示我的事件
         if len(event.user_r.all().filter(username=request.user.username))!=0:
             myevents.append(event)
 
-    myeventsnum=len(myevents) #事件总数
+    myeventsnum = len(myevents) # 事件总数
 
     if myeventsnum==0:
         hasNoEvent=True
@@ -203,3 +203,73 @@ def ced_ajax_get_eventlists(request):
     """返回JSON数据,给前端解析"""
     if request.method=="POST":
         pass
+
+
+#获取英雄榜列表
+def ced_get_hero_lists(request):
+
+    hasNoEvent=False
+
+    #获取我所有的事件信息
+    allevents = ced_events.objects.all()
+    myevents = []   # 收集我的事件
+    for event in allevents:
+        #只显示我的事件
+        if len(event.user_r.all().filter(username=request.user.username)) != 0:
+            myevents.append(event)
+    myeventsnum=len(myevents) #事件总数
+
+    if myeventsnum==0:
+        hasNoEvent=True
+
+    #获取到所有管理员
+    heros=CedEnvAdminGroup.objects.all()
+
+    return render_to_response(
+        "envadmins.html",
+
+        {
+            'heros':heros,
+            'myevents':myevents[0:10],
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent,
+            'myallevents':myevents,
+
+        }
+    )
+
+
+#数据展示页面
+def ced_show_alldatas(request):
+
+    hasNoEvent=False
+
+    #获取我所有的事件信息
+    allevents = ced_events.objects.all()
+    myevents = []   # 收集我的事件
+    for event in allevents:
+        #只显示我的事件
+        if len(event.user_r.all().filter(username=request.user.username)) != 0:
+            myevents.append(event)
+    myeventsnum=len(myevents) #事件总数
+
+    if myeventsnum==0:
+        hasNoEvent=True
+
+    #获取到所有管理员
+    heros=CedEnvAdminGroup.objects.all()
+
+    return render_to_response(
+        "datas.html",
+        {
+            'myevents':myevents[0:10],
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent,
+            'myallevents':myevents,
+        }
+    )
+
+
+#环境管理员个人设置页面
+def ced_person_config(request):
+    pass

@@ -1,0 +1,57 @@
+{% extends "homepage.html" %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {% block head %}
+      {{ block.super }}
+  {% endblock %}
+  <body>
+    {% block nav %}{{ block.super }}{% endblock %}
+    {% block mainbody %}
+    <!-- mainbody -->
+    <div class="container-fluid">
+      <div class="row">
+        {% block sidenav %}{{ block.super }}{% endblock %}
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+            <h1 class="page-header">当前位置</h1>
+            <ol class="breadcrumb">
+                <li><a href="/">首页</a></li>
+                <li class="active">统计与展示</li>
+            </ol>
+          <div class="row placeholders">
+          </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">一天/周/月/年内环境管理员治理数据
+                    <button type="button" class="btn btn-info btn-xs">当天</button>
+                    <button type="button" class="btn btn-success btn-xs">一周内</button>
+                    <button type="button" class="btn btn-warning btn-xs">一月内</button>
+                    <button type="button" class="btn btn-danger btn-xs">一年内</button>
+                </div>
+                <div class="panel-body">
+                    <div id="hccontainer-byman"></div>
+                </div>
+            </div>
+
+            <div class="panel panel-default">
+                <div class="panel-heading">一天/周/月/年内环境问题分布
+                    <button type="button" class="btn btn-info btn-xs">当天</button>
+                    <button type="button" class="btn btn-success btn-xs">一周内</button>
+                    <button type="button" class="btn btn-warning btn-xs">一月内</button>
+                    <button type="button" class="btn btn-danger btn-xs">一年内</button>
+                </div>
+
+                <div class="panel-body">
+                    <div id="hccontainer-byissue"></div>
+                </div>
+            </div>
+
+
+
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+    {% block footer %}{{ block.super }}{% endblock %}
+  </body>
+</html>

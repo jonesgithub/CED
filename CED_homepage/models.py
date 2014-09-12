@@ -5,6 +5,7 @@ from django.db.models.signals import post_save
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import generic
 from django.dispatch import receiver
+from CED.settings import SITE_ROOT_URL
 
 #导入的模型-用户
 class AuthUser(models.Model):
@@ -94,6 +95,17 @@ class ced_issues(models.Model):
 
     def __unicode__(self):
         return self.issuetitle
+
+#环境管理员组,此模型控制权限
+class CedEnvAdminGroup(models.Model):
+    envadminname=models.ForeignKey(AuthUser,related_name="user_envadmin")
+    envadminstatus=models.IntegerField(default=0) #管理员是否空闲
+    envadmingroup=models.CharField(max_length=50) #所在的组名,eg.海外酒店组/环境管理组
+    envadminavatar=models.URLField(default=SITE_ROOT_URL+'/static/images/spidertocat.png') #默认头像数据
+
+    def __unicode__(self):
+        return self.envadminname.username
+
 
 #存放事件和消息通知的模型
 class ced_events(models.Model):

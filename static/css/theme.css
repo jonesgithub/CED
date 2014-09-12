@@ -40,3 +40,13 @@ body{ padding-bottom: 150px; }
 .navbar,.sidebar,.container-fluid{ font-family:"微软雅黑","黑体",sans-serif; }
 .emailnotity-no,.delissue-no{ cursor: not-allowed; }
 .emailnotity,.delissue{ cursor: pointer; }
+
+.herolists{ width: auto; }
+.singlehero{ overflow: auto;padding: 20px;width: 250px;background-color: #f0f0f0;float: left;margin-right: 30px;margin-bottom: 30px; }
+.herocard-left{ float: left; }
+.herocard-right{ position: relative;left: 20px; }
+.envadminname{ font-size: 12px;font-weight: bold;text-align: center;margin-top: 5px; }
+.envadmingroup{ font-size: 14px;margin-bottom: 5px; }
+.envadminavatar{  }
+
+.table-responsive tr:hover{ background-color: #f0f0f0 !important;border-left: 5px solid #009F00;cursor: pointer; }

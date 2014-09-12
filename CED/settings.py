@@ -121,3 +121,6 @@ CKEDITOR_CONFIGS = {
             ],
     },
 }
+
+#SITEINFO
+SITE_ROOT_URL="http://127.0.0.1:8000"

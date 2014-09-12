@@ -1,0 +1,53 @@
+{% extends "homepage.html" %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {% block head %}{{ block.super }}{% endblock %}
+  <body>
+    {% block nav %}{{ block.super }}{% endblock %}
+    {% block mainbody %}
+    <!-- mainbody -->
+    <div class="container-fluid">
+      <div class="row">
+        {% block sidenav %}{{ block.super }}{% endblock %}
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+          <h1 class="page-header">当前位置</h1>
+            <ol class="breadcrumb">
+                <li><a href="/">首页</a></li>
+                <li class="active">查看环境管理员状态</li>
+            </ol>
+          <div class="row placeholders">
+          </div>
+          <h1 class="page-header">酒店测试环境管理员/接口人列表</h1>
+          <div class="table-responsive">
+            <table class="table table-striped">
+                <ul class="list-group herolists">
+                    {% for hero in heros %}
+                    <li class="list-group-item singlehero">
+
+                    <div class="herocard-left">
+                    <img src="{{ hero.envadminavatar }}" width="64" height="64" class="envadminavatar">
+                    <p class="list-group-item-text envadminname">{{ hero.envadminname }}</p>
+                    </div>
+
+                    <div class="herocard-right">
+                    <p class="list-group-item-text envadmingroup">{{ hero.envadmingroup }}</p>
+                    {% ifequal hero.envadminstatus 0 %}
+                    <p class="label list-group-item-text label-success">:）可接单</p>
+                    {% else %}
+                    <p class="label list-group-item-text label-danger">:( 不可用</p>
+                    {% endifequal %}
+                    </div>
+
+                    </li>
+                    {% endfor %}
+                </ul>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+    {% block footer %}{{ block.super }}{% endblock %}
+  </body>
+</html>

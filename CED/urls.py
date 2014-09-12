@@ -19,6 +19,9 @@ urlpatterns = patterns('',
     url(r'^cedis/(?P<cedis>\w+)/detail/notifysubman/$',views.ced_ajax_notify), #notity the subman
     url(r'^categories/(\d+)$',views.show_cat_issues),
     url(r'^geteventlists/$',views.ced_ajax_get_eventlists),
+    url(r'^cedheros/$',views.ced_get_hero_lists),
+    url(r'^showdatas/$',views.ced_show_alldatas),
+    url(r'^myconfig/$',views.ced_person_config),
 
     #AI
     url(r'^tools/codesync/$',codesync_views.codesync_home_page),

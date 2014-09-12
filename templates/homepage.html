@@ -22,6 +22,7 @@
       <script src="/static/js/respond.min.js"></script>
     <![endif]-->
    <script src="/static/js/jquery-1.8.3.min.js"></script>
+   <script src="/static/js/highcharts.js"></script>
    <script type="text/javascript">
     $(document).ready(function(){
 
@@ -43,10 +44,114 @@
             $(this).parent().parent().hide(1000);
         });
 
+        //datas页面的数据图标展示--环境管理员治理数据
+        $('#hccontainer-byman').highcharts({
+        chart: {
+            type: 'bar'
+        },
+        title: {
+            text: 'Historic World Population by Region'
+        },
+        subtitle: {
+            text: 'Source: Wikipedia.org'
+        },
+        xAxis: {
+            categories: ['Africa', 'America', 'Asia', 'Europe', 'Oceania'],
+            title: {
+                text: null
+            }
+        },
+        yAxis: {
+            min: 0,
+            title: {
+                text: 'Population (millions)',
+                align: 'high'
+            },
+            labels: {
+                overflow: 'justify'
+            }
+        },
+        tooltip: {
+            valueSuffix: ' millions'
+        },
+        plotOptions: {
+            bar: {
+                dataLabels: {
+                    enabled: true
+                }
+            }
+        },
+        legend: {
+            layout: 'vertical',
+            align: 'right',
+            verticalAlign: 'top',
+            x: -40,
+            y: 100,
+            floating: true,
+            borderWidth: 1,
+            backgroundColor: '#FFFFFF',
+            shadow: true
+        },
+        credits: {
+            enabled: false
+        },
+        series: [{
+            name: 'Year 1800',
+            data: [107, 31, 635, 203, 2]
+        }, {
+            name: 'Year 1900',
+            data: [133, 156, 947, 408, 6]
+        }, {
+            name: 'Year 2008',
+            data: [973, 914, 4054, 732, 34]
+        }]
+        });
+
+        // 问题单分类饼图
+        $('#hccontainer-byissue').highcharts({
+            chart: {
+                plotBackgroundColor: null,
+                plotBorderWidth: null,
+                plotShadow: false
+            },
+            title: {
+                text: 'Browser market shares at a specific website, 2010'
+            },
+            tooltip: {
+        	    pointFormat: '{series.name}: <b>{point.percentage:.1f}%</b>'
+            },
+            plotOptions: {
+                pie: {
+                    allowPointSelect: true,
+                    cursor: 'pointer',
+                    dataLabels: {
+                        enabled: false
+                    },
+                    showInLegend: true
+                }
+            },
+            series: [{
+                type: 'pie',
+                name: 'Browser share',
+                data: [
+                    ['Firefox',   45.0],
+                    ['IE',       26.8],
+                    {
+                        name: 'Chrome',
+                        y: 12.8,
+                        sliced: true,
+                        selected: true
+                    },
+                    ['Safari',    8.5],
+                    ['Opera',     6.2],
+                    ['Others',   0.7]
+                ]
+            }]
+        });
+
 
     });
     </script>
-
   </head>
 {% endblock %}
   <body>
@@ -57,7 +162,6 @@
         <a class="navbar-brand navbar-left" href="/">CED</a>
         <ul class="nav navbar-nav">
         <li class="active"><a href="/"><span class="glyphicon glyphicon-home"></span>首页</a></li>
-        <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-eye-open"></span>环境监控</a></li>
         <li class="dropdown">
         {% if hasEvent %}{% else %}<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-comment"></span>我的消息<span class="navbar-new">{{ myeventsnum }}</span></a>{% endif %}
         <ul class="dropdown-menu" role="menu">
@@ -67,19 +171,26 @@
             <li><a href="/allmyevents">查看所有消息(这里只显示最新的10条)</a></li>
           </ul>
         </li>
-        <li><a href="#"><span class="glyphicon glyphicon-stats"></span>数据展示</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-user"></span>英雄榜</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span>管理配置</a></li>
+        <li><a href="/showdatas"><span class="glyphicon glyphicon-stats"></span>统计与展示</a></li>
+        <li><a href="/cedheros"><span class="glyphicon glyphicon-user"></span>查看环境管理员状态</a></li>
+        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span>我的设置</a></li>
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th-list"></span>治理工具包<span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th-list"></span>工具包<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
-            <li><a href="#">核心服务预警监测</a></li>
-            <li><a href="#">问题URL自助诊断</a></li>
-            <li><a href="/tools/codesync/" target="_blank">环境代码同步工具</a></li>
-            <li><a href="http://10.3.6.170:8091/" target="_blank">服务器时间修改</a></li>
-            <li><a href="#">All IN ONE 查看</a></li>
+            <li><a href="#">CED自带工具</a></li>
             <li class="divider"></li>
-            <li><a href="#">更多工具</a></li>
+            <li><a href="#"><span class="glyphicon glyphicon-globe"></span>核心服务预警监测</a></li>
+            <li><a href="#"><span class="glyphicon glyphicon-warning-sign"></span>问题URL自助诊断</a></li>
+            <li><a href="/tools/codesync/" target="_blank"><span class="glyphicon glyphicon-refresh"></span>环境代码同步工具</a></li>
+            <li><a href="http://10.3.6.170:8091/" target="_blank"><span class="glyphicon glyphicon-dashboard"></span>服务器时间修改</a></li>
+            <li><a href="#"><span class="glyphicon glyphicon-search"></span>All IN ONE 查看</a></li>
+            <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-eye-open"></span>UAT环境监控</a></li>
+            <li class="divider"></li>
+            <li><a href="#">携程内部工具</a></li>
+            <li class="divider"></li>
+            <li><a href="http://croller/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>croller</a></li>
+            <li><a href="http://scm.dev.sh.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>SCMPortal</a></li>
+            <li><a href="http://hotelqa/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>hotelqa</a></li>
           </ul>
         </li>
 
@@ -172,7 +283,7 @@
                 <tr>
                   <td>{{ issue.issueid }}</td>
                   <td>{{ issue.issuesubman }}</td>
-                  <td>{{ issue.issuetitle | truncatechars:'20' }}</td>
+                  <td><a href="{{ issue.issuedetailurl }}" title="查看详情" class="viewdetail">{{ issue.issuetitle | truncatechars:'20' }}</a></td>
                   <td>{{ issue.issuecreatetime | date:"Y-m-d H:i:s"  }}</td>
                   <td>
                       {% ifequal issue.issuestatus 1 %}
