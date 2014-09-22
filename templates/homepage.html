@@ -26,6 +26,67 @@
    <script type="text/javascript">
     $(document).ready(function(){
 
+        //$(".nav li").click(function(){
+		    //$(this).addClass("active").siblings().removeClass("active")
+	    //});
+
+        var avatarurl=$(".avatarurl");
+        var oravatarurl=avatarurl.val();
+
+        $(".choosewho").click(function(){
+            $("#whoischoosed").attr("value",$(this).text().split(" ")[0]);
+        });
+
+        $(".cedtypes li").click(function(){
+               $("#newistype").attr("value",$(this).text());
+        });
+
+        //伸缩侧边栏
+        $("#cutsidebar").click(function(){
+            alert("暂未支持!");
+        });
+
+        //修改头像
+        $("#cmyavatar").click(function(){
+            $(".avatarurl").attr('disabled',false);
+        });
+
+        //恢复默认头像地址
+        $("#czmyavatar").click(function(){
+            avatarurl.attr('value',oravatarurl);
+            avatarurl.attr('disabled',true);
+        });
+
+
+        //保存admin设置
+        $("#savemysetting").click(function(){
+            var avatarurl=$(".avatarurl").val();
+            var busyval=""; //默认为0
+            var isnotbusy=$(".isnotbusy");
+            var isbusy=$(".isbusy");
+
+            if(isnotbusy.attr("checked")=="checked") {
+                busyval = isnotbusy.val();
+            }
+            else if(isbusy.attr("checked")=="checked"){
+                busyval = isbusy.val();
+            }
+
+            $.post("/ajaxsaveadminsettings/",{avatarurl:avatarurl,status:busyval},function(result){
+                alert(result);
+                $(".herocard-left img").attr('src',avatarurl);
+                if(busyval==0) {
+                    $(".herocard-right .mystatus").attr('class','label list-group-item-text label-success mystatus');
+                    $(".herocard-right .mystatus").text(":）可接单");
+                }
+                else{
+                    $(".herocard-right .mystatus").attr('class','label list-group-item-text label-danger mystatus');
+                    $(".herocard-right .mystatus").text(":( 不可用");
+                }
+            });
+
+        });
+
         $(".emailnotity-no").click(function(){
             alert("不被允许的操作!");
         });
@@ -160,20 +221,11 @@
     <!-- 顶部导航条 -->
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <a class="navbar-brand navbar-left" href="/">CED</a>
-        <ul class="nav navbar-nav">
+        <ul class="nav navbar-nav navbar-left">
         <li class="active"><a href="/"><span class="glyphicon glyphicon-home"></span>首页</a></li>
-        <li class="dropdown">
-        {% if hasEvent %}{% else %}<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-comment"></span>我的消息<span class="navbar-new">{{ myeventsnum }}</span></a>{% endif %}
-        <ul class="dropdown-menu" role="menu">
-            {% for myevent in myevents %}
-            <li>{{ myevent.eventdes | safe }}</li>
-            {% endfor %}
-            <li><a href="/allmyevents">查看所有消息(这里只显示最新的10条)</a></li>
-          </ul>
-        </li>
+
         <li><a href="/showdatas"><span class="glyphicon glyphicon-stats"></span>统计与展示</a></li>
         <li><a href="/cedheros"><span class="glyphicon glyphicon-user"></span>查看环境管理员状态</a></li>
-        <li><a href="#"><span class="glyphicon glyphicon-wrench"></span>我的设置</a></li>
         <li class="dropdown">
           <a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-th-list"></span>工具包<span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
@@ -184,10 +236,10 @@
             <li><a href="/tools/codesync/" target="_blank"><span class="glyphicon glyphicon-refresh"></span>环境代码同步工具</a></li>
             <li><a href="http://10.3.6.170:8091/" target="_blank"><span class="glyphicon glyphicon-dashboard"></span>服务器时间修改</a></li>
             <li><a href="#"><span class="glyphicon glyphicon-search"></span>All IN ONE 查看</a></li>
-            <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-eye-open"></span>UAT环境监控</a></li>
             <li class="divider"></li>
             <li><a href="#">携程内部工具</a></li>
             <li class="divider"></li>
+            <li><a href="http://uatinfo.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>UAT环境监控</a></li>
             <li><a href="http://croller/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>croller</a></li>
             <li><a href="http://scm.dev.sh.ctripcorp.com/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>SCMPortal</a></li>
             <li><a href="http://hotelqa/" target="_blank"><span class="glyphicon glyphicon-cloud"></span>hotelqa</a></li>
@@ -196,11 +248,40 @@
 
         <form class="navbar-form navbar-left" role="search">
         <div class="form-group">
-            <input type="text" class="form-control" placeholder="请输入问题单号">
+            <input type="text" class="form-control" placeholder="请输入关键字">
         </div>
-        <button type="submit" class="btn btn-default">直达</button>
+        <button type="submit" class="btn btn-default">搜索</button>
+        <button type="submit" class="btn btn-default">高级搜索</button>
         </form>
+
+
+
         </ul>
+
+        <ul class="nav navbar-nav navbar-right" style="margin-right: 30px !important;">
+        <li class="dropdown">
+        {% if hasEvent %}{% else %}<a href="#" class="dropdown-toggle" data-toggle="dropdown"><span class="glyphicon glyphicon-comment"></span>我的消息<span class="navbar-new">{{ myeventsnum }}</span></a>{% endif %}
+        <ul class="dropdown-menu" role="menu">
+            {% for myevent in myevents %}
+            <li>{{ myevent.eventdes | safe }}</li>
+            {% endfor %}
+            <li><a href="/allmyevents">查看所有消息(这里只显示最新的10条)</a></li>
+          </ul>
+        </li>
+        </ul>
+
+        <ul class="nav navbar-nav navbar-right" style="margin-right: 30px !important;">
+        <li class="dropdown">
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Welcome，{{ curuser.username }} <span class="label"><img src="/static/images/spidertocat.png" width="16" height="16"></span><span class="caret"></span></a>
+          <ul class="dropdown-menu" role="menu">
+            <li><a href="/adminsettings"><span class="glyphicon glyphicon-wrench"></span>我的设置</a></li>
+            <li><a href="/ajaxnewissue"><span class="glyphicon glyphicon-edit"></span>创建新的问题单</a></li>
+          </ul>
+        </li>
+
+        </ul>
+
+
 
     </nav>
   {% endblock %}
@@ -211,21 +292,29 @@
       <div class="row">
       {% block sidenav %}
         <div class="col-sm-3 col-md-2 sidebar">
+          <!-- <span id="cutsidebar">-</span> -->
           <ul class="nav nav-sidebar">
-            <li><a href="/categories/1"><span class="glyphicon glyphicon-info-sign"></span>未解决</a></li>
-            <li><a href="/categories/3"><span class="glyphicon glyphicon-ok-sign"></span>已解决</a></li>
-            <li><a href="/categories/2"><span class="glyphicon glyphicon-question-sign"></span>待确认</a></li>
-            <li><a href="/categories/4"><span class="glyphicon glyphicon-remove-sign"></span>被驳回</a></li>
+            <li><a href="#">- 作为管理员</a></li>
+            <li class="divider"></li>
+            <li><a href="/categories/1"><span class="glyphicon glyphicon-info-sign"></span>我未解决的</a></li>
+            <li><a href="/categories/3"><span class="glyphicon glyphicon-ok-sign"></span>我已解决的</a></li>
+            <li><a href="/categories/2"><span class="glyphicon glyphicon-question-sign"></span>尚未验证的</a></li>
+            <li><a href="/categories/4"><span class="glyphicon glyphicon-remove-sign"></span>我被驳回的</a></li>
+            <li><a href="#">- 作为提交人</a></li>
+            <li class="divider"></li>
+            <li><a href=""><span class="glyphicon glyphicon-upload"></span>我已提交的</a></li>
+            <li><a href=""><span class="glyphicon glyphicon-repeat"></span>待我验证的</a></li>
+            <li><a href=""><span class="glyphicon glyphicon-ok"></span>已被解决的</a></li>
           </ul>
         </div>
        {% endblock %}
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-          <h1 class="page-header">今日问题单统计</h1>
+
           <div class="row placeholders">
             <div class="col-xs-6 col-sm-3 placeholder">
                 <div class="panel panel-success">
                     <div class="panel-heading">
-                    <h3 class="panel-title">已解决的问题单</h3>
+                    <h3 class="panel-title">我已解决的</h3>
                     </div>
                     <div class="panel-body">
                     <h1 class="qnumber-success">{{ issuedone }}</h1>
@@ -235,7 +324,7 @@
             <div class="col-xs-6 col-sm-3 placeholder">
                  <div class="panel panel-danger">
                     <div class="panel-heading">
-                    <h3 class="panel-title">未解决的问题单</h3>
+                    <h3 class="panel-title">我未解决的</h3>
                     </div>
                     <div class="panel-body">
                     <h1 class="qnumber-danger">{{ issueundo }}</h1>
@@ -245,7 +334,7 @@
             <div class="col-xs-6 col-sm-3 placeholder">
                  <div class="panel panel-info">
                     <div class="panel-heading">
-                    <h3 class="panel-title">等待确认的问题单</h3>
+                    <h3 class="panel-title">尚未验证的</h3>
                     </div>
                     <div class="panel-body">
                     <h1 class="qnumber-info">{{ issuewait }}</h1>
@@ -255,7 +344,7 @@
             <div class="col-xs-6 col-sm-3 placeholder">
                  <div class="panel panel-warning">
                     <div class="panel-heading">
-                    <h3 class="panel-title">被驳回的问题单</h3>
+                    <h3 class="panel-title">我被驳回的</h3>
                     </div>
                     <div class="panel-body">
                     <h1 class="qnumber-danger">{{ issuerollback }}</h1>
@@ -264,7 +353,6 @@
             </div>
           </div>
 
-          <h1 class="page-header">问题单列表</h1>
           <div class="table-responsive">
             <table class="table table-striped">
               <thead>

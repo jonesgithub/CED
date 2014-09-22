@@ -1,5 +1,5 @@
-#!/usr/bin/env python
 # -*- coding:utf-8 -*-
+
 from django.db import models
 from django.db.models.signals import post_save
 from django.contrib.contenttypes.models import ContentType
@@ -46,6 +46,7 @@ class ced_issue_comments(models.Model):
     commentman=models.ForeignKey(AuthUser)
     comment=models.TextField()
     commentdate=models.DateTimeField(auto_now=True)
+    commentattach=models.ImageField(upload_to="uploads/images/commentimages",max_length=255,blank=True) #评论内容图片附件上传
     events = generic.GenericRelation('ced_events') #关联事件模型
 
     def __unicode__(self):
@@ -69,7 +70,9 @@ class ced_issues(models.Model):
     issuestatus=models.IntegerField(default=1)
     issuecomments=models.ManyToManyField(ced_issue_comments,blank=True) #添加评论记录
     issuereceivemans=models.ManyToManyField(AuthUser,related_name="recman") #事件处理者,委托接受人
+    issueattach=models.ImageField(upload_to="uploads/images/issueimages",max_length=255,blank=True) #新问题单图片附件上传
     events = generic.GenericRelation('ced_events') #关联事件模型
+
 
     @property
     def issueid(self):
@@ -189,3 +192,5 @@ def _cedissue_event_handle(sender,instance,**kwargs):
         #加入事件收取人
         for revman in thisissue.issuereceivemans.all():
             thisevent.user_r.add(revman)
+
+#注册监听comments的监听事件,当发表评论和回复评论时触发

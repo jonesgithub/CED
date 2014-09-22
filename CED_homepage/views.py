@@ -4,8 +4,16 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from CED_homepage.models import *
-from forms import *
-from django.template import RequestContext
+
+#权限控制封装
+def is_not_admin(view):
+    pass
+
+
+#登陆控制封装
+def requirelogin(view):
+    pass
+
 
 #CED首页
 def homepage(request):
@@ -40,7 +48,8 @@ def homepage(request):
             'issuerollback':issue_rollback_num,
             'myevents':myevents[0:10],
             'myeventsnum':myeventsnum,
-            'hasEvent':hasNoEvent
+            'hasEvent':hasNoEvent,
+            'curuser':request.user,
         }
 
     )
@@ -57,9 +66,7 @@ def ced_issue_detail(request,cedis):
     cedisid=cedis[5:]
     allevents=ced_events.objects.all()
     myevents=[] #收集我的事件
-    cF=commentForm(data={
-        'commentcontent':u' '
-    })
+
     for event in allevents:
         #只显示我的事件
         if len(event.user_r.all().filter(username=request.user.username))!=0:
@@ -73,8 +80,8 @@ def ced_issue_detail(request,cedis):
             "thiscedis":cedisone,
             'myevents':myevents[0:10],
             'myeventsnum':myeventsnum,
-            'commentform':cF,
-            'hasEvent':hasNoEvent
+            'hasEvent':hasNoEvent,
+            'curuser':request.user,
         }
     )
 
@@ -99,28 +106,67 @@ def ced_show_allmyevents(request):
             'myeventsnum':myeventsnum,
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
+            'curuser':request.user,
     })
 
 #Ajax推送评论消息
 def ced_ajax_addnewcomment(request,cedis):
-    if request.method=="POST":
-        cf=commentForm(request.POST)
-        if cf.is_valid(): #如果验证成功
-            cd=cf.cleaned_data
+
+    if request.method == "POST" and request.FILES.get("commentfile"):
+
+        upfile=request.FILES["commentfile"]
+
+        if not upfile.name.lower().endswith(('.png','.jpg','.jpeg','.gif')):
+            return render_to_response("errorinfo.html",
+                    {'errorinfo':u"不支持的文件上传类型！"},
+                )
+        elif upfile.size/1024>1024:
+            return render_to_response("errorinfo.html",
+                    {'errorinfo':u"附件大小不得大于1MB，请重新选择附件！"},
+                )
+        elif request.POST["commentcontent"]=="":
+            return render_to_response("errorinfo.html",
+                    {'errorinfo':u"评论内容不能为空！"},
+                )
+        else:
             newcomment=ced_issue_comments(
                 commentman=AuthUser.objects.get(username=request.user.username),
-                comment=cd["commentcontent"]
+                comment=request.POST["commentcontent"],
+                commentattach=upfile,
             )
             try:
                 newcomment.save()
                 #绑定到这个cedis上
                 cis=ced_issues.objects.get(id=cedis[5:])
                 cis.issuecomments.add(newcomment)
-                return HttpResponse(u"评论提交成功！")
             except:
-                return HttpResponse(u"远程服务器错误！请联系管理员")
-        else:
-            return HttpResponse(u"评论内容不能为空！")
+                return render_to_response("errorinfo.html",
+                    {'errorinfo':u"远程服务器错误！请联系管理员"},
+                )
+            else:
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+
+    elif request.POST["commentfile"] == "" and request.POST["commentcontent"] != "":
+            newcomment=ced_issue_comments(
+                commentman=AuthUser.objects.get(username=request.user.username),
+                comment=request.POST["commentcontent"],
+            )
+            try:
+                newcomment.save()
+                #绑定到这个cedis上
+                cis=ced_issues.objects.get(id=cedis[5:])
+                cis.issuecomments.add(newcomment)
+            except:
+                return render_to_response("errorinfo.html",
+                    {'errorinfo':u"远程服务器错误！请联系管理员"},
+                )
+            else:
+                #直接跳转
+                return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
+    else:
+        return render_to_response("errorinfo.html",
+                    {'errorinfo':u"非法请求！评论内容不能为空！"},
+                )
 
 
 #分类issue筛选
@@ -164,7 +210,8 @@ def show_cat_issues(request,cattype):
                 'issuerollback':issue_rollback_num,
                 'myevents':myevents[0:10],
                 'myeventsnum':myeventsnum,
-                'hasEvent':hasNoEvent
+                'hasEvent':hasNoEvent,
+                'curuser':request.user,
             }
 
         )
@@ -234,6 +281,7 @@ def ced_get_hero_lists(request):
             'myeventsnum':myeventsnum,
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
+            'curuser':request.user,
 
         }
     )
@@ -256,9 +304,6 @@ def ced_show_alldatas(request):
     if myeventsnum==0:
         hasNoEvent=True
 
-    #获取到所有管理员
-    heros=CedEnvAdminGroup.objects.all()
-
     return render_to_response(
         "datas.html",
         {
@@ -266,10 +311,180 @@ def ced_show_alldatas(request):
             'myeventsnum':myeventsnum,
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
+            'curuser':request.user,
         }
     )
 
 
 #环境管理员个人设置页面
 def ced_person_config(request):
+
+    hasNoEvent=False
+
+    #获取我所有的事件信息
+    allevents = ced_events.objects.all()
+    myevents = []   # 收集我的事件
+    for event in allevents:
+        #只显示我的事件
+        if len(event.user_r.all().filter(username=request.user.username)) != 0:
+            myevents.append(event)
+    myeventsnum=len(myevents) #事件总数
+
+    thisadmin=CedEnvAdminGroup.objects.get(envadminname=request.user)
+
+    if myeventsnum==0:
+        hasNoEvent=True
+
+    return render_to_response(
+        "adminsetting.html",
+        {
+            'myevents':myevents[0:10],
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent,
+            'myallevents':myevents,
+            'thisadmin':thisadmin,
+            'curuser':request.user,
+        }
+    )
+
+
+#管理员个人设置页面的ajax接口
+def ced_ajax_save_admin_settings(request):
+    if request.method=="POST" and request.POST["avatarurl"]!="" and request.POST["status"]!="":
+        thisadmin=CedEnvAdminGroup.objects.get(envadminname=request.user)
+        thisadmin.envadminavatar=request.POST["avatarurl"]
+        thisadmin.envadminstatus=request.POST["status"]
+        try:
+            thisadmin.save()
+        except:
+            return HttpResponse(u"保存修改时发生错误!")
+        else:
+            return HttpResponse(u"保存成功!")
+    else:
+        return HttpResponse(u"啊哦，你好像忘了填写什么或者勾选什么？")
+
+
+#ajax提交新的问题单页面
+def ced_ajax_new_issue_submit(request):
+
+    hasNoEvent=False
+
+    allcedtypes=ced_types.objects.all()
+
+    #获取我所有的事件信息
+    allevents = ced_events.objects.all()
+    myevents = []   # 收集我的事件
+    for event in allevents:
+        #只显示我的事件
+        if len(event.user_r.all().filter(username=request.user.username)) != 0:
+            myevents.append(event)
+    myeventsnum=len(myevents) #事件总数
+
+    #获取到所有管理员
+    heros=CedEnvAdminGroup.objects.all()
+
+    if myeventsnum==0:
+        hasNoEvent=True
+
+    return render_to_response(
+        "newissue.html",
+        {
+            'heros':heros,
+            'myevents':myevents[0:10],
+            'myeventsnum':myeventsnum,
+            'hasEvent':hasNoEvent,
+            'myallevents':myevents,
+            'curuser':request.user,
+            'allcedtypes':allcedtypes,
+
+        }
+    )
+
+
+def ced_ajax_save_new_issue(request):
+
+    """后端提交新issue的验证"""
+
+    cedtmpkeys=[]
+
+    if request.method == "POST":
+
+        if request.POST["newistitle"]=="": #判断标题是否为空
+            return render_to_response("errorinfo.html",
+                        {'errorinfo':u"标题不能为空！"},
+                )
+        elif request.POST["newisdes"]=="": #判断描述是否为空
+            return render_to_response("errorinfo.html",
+                        {'errorinfo':u"描述不能为空！"},
+                )
+        elif request.POST["newistype"]=="": #验证环境类型
+            return render_to_response("errorinfo.html",
+                        {'errorinfo':u"类型不能为空！"},
+                )
+        elif request.POST["whoischoosed"]=="":
+            return render_to_response("errorinfo.html",
+                        {'errorinfo':u"接受处理人不能为空！"},
+                )
+        elif request.FILES.has_key("file"):
+
+            upfile=request.FILES["file"]
+
+            if not upfile.name.lower().endswith(('.png','.jpg','.jpeg','.gif')):
+                return render_to_response("errorinfo.html",
+                    {'errorinfo':u"不支持的文件上传类型！"},
+                )
+            elif upfile.size/1024>1024:
+                return render_to_response("errorinfo.html",
+                    {'errorinfo':u"附件大小不得大于1MB，请重新选择附件！"},
+                )
+        try:
+            ced_types.objects.get(issuetype=request.POST["newistype"])
+            AuthUser.objects.get(username=request.POST["whoischoosed"])
+        except:
+            return render_to_response("errorinfo.html",
+                        {'errorinfo':u"请检查环境问题类型和问题接收人是否正确！"},
+                )
+        else:
+            newissue=ced_issues(
+                issuetitle=request.POST["newistitle"],
+                issuedetail=request.POST["newisdes"],
+                issuetypes=ced_types.objects.get(issuetype=request.POST["newistype"]),
+                issuesubman=AuthUser.objects.get(username=request.user.username), #提交人必须是当前用户
+                issueattach=request.FILES["file"] if request.FILES.has_key("file") else "", #附件保存
+            )
+
+            newissue.save() #先保存,加入issuereceivemans,问题单接收人,逻辑为有且只能选择一个
+            newissue.issuereceivemans.add(AuthUser.objects.get(username=request.POST["whoischoosed"]))
+
+            try:
+                #获取分隔后的tag线索，然后加入issuekey
+                for item in request.POST['newistag'].split(" "):
+                    cedtmpkeys.append(ced_keys(keyname=item))
+
+                for obj in cedtmpkeys:
+                    obj.save() #先保存
+                    newissue.issuekey.add(obj) #在加入到issue的key中来
+
+                #触发模型信号事件
+                newissue.save()
+
+            except:
+                return render_to_response("errorinfo.html",
+                        {'errorinfo':u"远程服务器错误！请联系管理员"},
+                )
+
+            else:
+                #直接返回首页
+                return HttpResponseRedirect("/")
+    else:
+        return render_to_response("errorinfo.html",
+                    {'errorinfo':u"非法请求!"},
+                )
+
+
+def ced_ajax_save_commentfile(request):
+    pass
+
+def ced_ajax_clear_all_notify(request):
+    """消除所有的通知"""
     pass

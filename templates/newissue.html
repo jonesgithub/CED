@@ -1,0 +1,111 @@
+{% extends "homepage.html" %}
+
+<!DOCTYPE html>
+<html lang="en">
+  {% block head %}
+      {{ block.super }}
+  {% endblock %}
+  <body>
+    {% block nav %}{{ block.super }}{% endblock %}
+    {% block mainbody %}
+    <!-- mainbody -->
+    <div class="container-fluid">
+      <div class="row">
+        {% block sidenav %}{{ block.super }}{% endblock %}
+        <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
+
+            <ol class="breadcrumb">
+                <li><a href="/">首页</a></li>
+                <li class="active">+ 提交一个新的问题单</li>
+            </ol>
+
+<pre>
+问题单范例：
+标题：http://www.fat2.qa.nt.ctripcorp.com 响应缓慢
+描述：http://www.fat2.qa.nt.ctripcorp.com 响应时间缓慢，表现为响应时间10s以上。
+类型：环境常规
+线索信息：fat2 http://www.fat2.qa.nt.ctripcorp.com</pre>
+
+<form id="addissue" enctype="multipart/form-data" action="/ajaxsavenewissue/" method="post">
+
+        <!-- 大表单 -->
+        <span class="attachtip">输入简单扼要的问题标题即可.</span>
+        <div class="input-group input-group-lg">
+            <span class="input-group-addon">* 标题</span>
+            <input type="text" class="form-control" placeholder="输入简单扼要的问题标题即可." name="newistitle">
+        </div>
+
+        <div class="input-group input-group-lg">
+            <span class="input-group-addon">* 描述</span>
+            <textarea class="form-control" style="height: 300px;" name="newisdes">
+-问题现象：
+
+-问题复现步骤：
+
+    步骤一：
+
+    步骤二：
+
+    步骤三：
+
+-还有其他想说的：
+            </textarea>
+        </div>
+
+         <div class="input-group input-group-lg">
+
+      <div class="input-group-btn">
+
+        <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">* 类型 <span class="caret"></span></button>
+        <ul class="dropdown-menu cedtypes" role="menu">
+            {% for cedtype in allcedtypes %}
+                <li><a href="#">{{ cedtype }}</a></li>
+            {% endfor %}
+        </ul>
+      </div><!-- /btn-group -->
+
+      <input type="text" class="form-control" value="环境常规" name="newistype" id="newistype">
+
+        </div>
+
+             <span class="attachtip">多个线索用空格键分隔开！</span>
+            <div class="input-group input-group-lg">
+                <span class="input-group-addon">* 标签/线索</span>
+      <input type="text" class="form-control" placeholder="多个线索用空格键分隔开" name="newistag">
+
+    </div><!-- /input-group -->
+
+  <div class="input-group">
+        <input id="file" name="file" type="file" class="btn btn-info">
+        <span class="attachtip">附件仅支持下列格式:.jpg,.jpeg,.png,.gif，且上传大小不得大于1MB！</span>
+    </div>
+
+    <span class="attachtip">请在下方选择本次问题单的接收人.</span>
+    <div class="input-group input-group-lg">
+                <span class="input-group-addon">* 接收人</span>
+    <input id="whoischoosed" name="whoischoosed" type="text" class="form-control">
+
+    </div>
+
+    <div class="input-group">
+                    {% for hero in heros %}
+                    {% ifequal hero.envadminstatus 0 %}
+                    <label class="btn btn-success btn-sm choosewho">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
+                    {% else %}
+                    <label class="btn btn-danger btn-sm choosewho" disabled="true">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
+                    {% endifequal %}
+                    {% endfor %}
+                </div>
+
+
+    <input type="submit" value="+ 添加新问题单" class="btn btn-default" style="margin-top: 15px;width: 100%;">
+
+        </form>
+
+        </div>
+      </div>
+    </div>
+    {% endblock %}
+    {% block footer %}{{ block.super }}{% endblock %}
+  </body>
+</html>
