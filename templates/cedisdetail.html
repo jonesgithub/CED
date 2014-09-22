@@ -11,7 +11,6 @@
     <link href="/static/bootstrap/css/bootstrap.css" rel="stylesheet">
     <!-- CED Theme -->
     <link href="/static/css/theme.css" rel="stylesheet">
-    <link href="/static/bsmarkdown/css/django_bootstrap_markdown.css" rel="stylesheet">
 
     <!-- Loading Flat UI -->
     <link href="/static/css/flat-ui.css" rel="stylesheet">
@@ -23,8 +22,8 @@
       <script src="/static/js/html5shiv.js"></script>
       <script src="/static/js/respond.min.js"></script>
     <![endif]-->
+    <script src="/static/ckeditor/ckeditor/ckeditor.js"></script>
     <script src="/static/js/jquery-1.8.3.min.js"></script>
-
     <script type="text/javascript">
     $(document).ready(function(){
 
@@ -36,6 +35,33 @@
             });
         });
 
+
+        $("#submitcomment").click(function(){
+            //CKEditor内容获取
+            var content= CKEDITOR.instances.id_commentcontent.getData();
+            //AJAX表单提交
+            $.post("addnewcomment/",{ commentcontent:content },
+            function(data){
+                if(data=="评论提交成功！"){
+                $("#commentform").append(
+                "<div class='alert alert-success alert-dismissible' role='alert'>" +
+                "<button type='button' class='close' data-dismiss='alert'>" +
+                "<span aria-hidden='true'>&times;</span><span class='sr-only'>关闭</span></button>" +
+                ""+data+"刷新页面即可看到你的评论。"+"</div>"
+                )
+                $(".alert").fadeOut(1000);
+                }
+                else{
+                $("#commentform").append(
+                "<div class='alert alert-danger alert-dismissible' role='alert'>" +
+                "<button type='button' class='close' data-dismiss='alert'>" +
+                "<span aria-hidden='true'>&times;</span><span class='sr-only'>关闭</span></button>" +
+                ""+data+"</div>"
+                )
+                $(".alert").fadeOut(1000);
+                }
+            });
+        });
     });
     </script>
   </head>
@@ -48,7 +74,7 @@
       <div class="row">
         {% block sidenav %}{{ block.super }}{% endblock %}
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
-
+          <h1 class="page-header">当前位置</h1>
             <ol class="breadcrumb">
                 <li><a href="/">首页</a></li>
                 <li class="active">正在处理 #{{ thiscedis.issueid }} 问题单</li>
@@ -56,7 +82,7 @@
 
           <div class="row placeholders">
           </div>
-
+          <h1 class="page-header">问题单 #{{ thiscedis.issueid }} 的详情内容</h1>
           <div class="table-responsive">
             <table class="table table-striped">
                 <div class="list-group issuedetail">
@@ -91,7 +117,7 @@
                     </a>
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-th-large"></span>详细描述</h4>
-                    <p class="list-group-item-text"><pre class="issuedetail">{{ thiscedis.issuedetail }}</pre></p>
+                    <p class="list-group-item-text">{{ thiscedis.issuedetail | safe }}</p>
                     </a>
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-tag"></span>问题类型</h4>
@@ -116,57 +142,31 @@
                         {% endfor %}
                     </a>
                     <a class="list-group-item">
-                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-time"></span>最近一次修改时间</h4>
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-time"></span>最近修改时间</h4>
                     <p class="list-group-item-text">{{ thiscedis.issuecreatetime | date:"Y-m-d H:i:s"  }}</p>
                     </a>
-
-                    {% ifnotequal thiscedis.issueattach "" %}
-                    <div class="list-group-item">
-                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-picture"></span>问题单图片附件</h4>
-                    <p class="list-group-item-text"><a href="{{ MEDIA_URL }}{{ thiscedis.issueattach.url }}" title="查看大图" target="_blank"><img src="{{ MEDIA_URL }}{{ thiscedis.issueattach.url }}" class="thumbnail cedattachimg"></a></p>
-                    </div>
-                    {% endifnotequal %}
-
                 </div>
             </table>
           </div>
 
-         <ol class="breadcrumb">
-                <li class="active">评论列表</li>
-            </ol>
-
+          <h1 class="page-header">#{{ thiscedis.issueid }} 问题单的评论内容</h1>
           <div class="table-responsive">
             <div class="table table-striped">
                 <div class="list-group issuedetail">
                     {% for comment in thiscedis.issuecomments.all %}
                     <div class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>{{ comment.commentman }} - <span style="font-size: 12px;">{{ comment.commentdate | date:"Y-m-d H:i:s"  }}</span></h4>
-                    <div class="list-group-item-text commentcontent"><pre class="commentpre">{{ comment.comment }}</pre></div>
-                        {% ifnotequal comment.commentattach "" %}
-                    <div class="list-group-item-text commentattach"><p class="list-group-item-text"><a href="{{ MEDIA_URL }}{{ comment.commentattach.url }}" title="查看大图" target="_blank"><img src="{{ MEDIA_URL }}{{ comment.commentattach.url }}" class="thumbnail cedattachimg"></a></p></div>
-                    {% endifnotequal %}
+                    <div class="list-group-item-text commentcontent">{{ comment.comment | safe }}</div>
                     </div>
                     {% endfor %}
                 </div>
             </div>
           </div>
 
-        <ol class="breadcrumb" style="">
-                <li class="active">+ 添加一条评论</li>
-            </ol>
-
-
-    <form id="addcomment" enctype="multipart/form-data" action="addnewcomment/" method="post" style="width: 100%;">
-        <div class="input-group input-group-lg">
-            <span class="input-group-addon">评论</span>
-            <textarea class="form-control" style="height: 100px;" id="commentcontent" name="commentcontent"></textarea>
-        </div>
-        <input id="commentfile" name="commentfile" type="file" class="btn btn-info">
-        <span class="attachtip">附件仅支持下列格式:.jpg,.jpeg,.png,.gif，且上传大小不得大于1MB！</span>
-        <input type="submit" value="+ 添加评论" class="btn btn-default" style="margin-top: 15px;width: 100%;">
-    </form>
-
-
+        <form id="commentform">{% csrf_token %}
+         {{ commentform.as_p }}
+         <input type="button" id="submitcomment" class="btn btn-default" style="margin-top: 15px;width: 100%;" value="提交评论">
+        </form>
         </div>
       </div>
     </div>
