@@ -1,7 +1,7 @@
 #### CED简介
 
 CtripEnvDoctor-环境治理平台（Ctrip内部使用）
-Django1.7+MySQL
+Django1.7+MySQL+FlatUI
 
 
 #### CED首页
