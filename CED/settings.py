@@ -37,7 +37,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'CED_homepage',
-    'ckeditor',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -96,31 +95,13 @@ STATICFILES_DIRS = (
     ('css',os.path.join(STATIC_ROOT,'css').replace('\\','/') ),
     ('js',os.path.join(STATIC_ROOT,'js').replace('\\','/') ),
     ('images',os.path.join(STATIC_ROOT,'images').replace('\\','/') ),
-    ('upload',os.path.join(STATIC_ROOT,'upload').replace('\\','/') ),
     ('bootstrap',os.path.join(STATIC_ROOT,'bootstrap').replace('\\','/') ),
     ('less',os.path.join(STATIC_ROOT,'less').replace('\\','/') ),
     ('fonts',os.path.join(STATIC_ROOT,'fonts').replace('\\','/') ),
 )
 
-CKEDITOR_RESTRICT_BY_USER=True
-CKEDITOR_WINDOWSMODE=True
-CKEDITOR_UPLOAD_URL="http://127.0.0.1:8000"
-CKEDITOR_UPLOAD_PATH=os.path.join(STATIC_ROOT,"upload","imguploads")
-
-CKEDITOR_CONFIGS = {
-    'default': {
-        'height': '180',
-        'width': '100%',
-        'language':'zh-cn',
-        'toolbar':[
-            ['Bold', 'Italic', 'images','Smiley'],
-            [
-              'Image',
-              'Font','FontSize',
-            ],
-            ],
-    },
-}
+MEDIA_ROOT=os.path.join(BASE_DIR,'media')
+MEDIA_URL='/media/'
 
 #SITEINFO
-SITE_ROOT_URL="http://127.0.0.1:8000"
+SITE_ROOT_URL="http://10.3.6.170:8077"
