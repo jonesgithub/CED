@@ -23,15 +23,59 @@
     <![endif]-->
    <script src="/static/js/jquery-1.8.3.min.js"></script>
    <script src="/static/js/highcharts.js"></script>
+   <script src="/static/js/jquery-ui.js"></script>
    <script type="text/javascript">
+
     $(document).ready(function(){
 
         //$(".nav li").click(function(){
 		    //$(this).addClass("active").siblings().removeClass("active")
 	    //});
 
+        var tmpmentiondics=[];
+        var tmpkeysdics=[];
         var avatarurl=$(".avatarurl");
         var oravatarurl=avatarurl.val();
+        var handleitem=$(".ui-menu-item");
+
+        handleitem.live("mouseover",function(){
+            $(this).append("<span class='ystip'> ??? 疑似相似</span>");
+        });
+
+        handleitem.live("mouseout",function(){
+            $(".ystip").remove();
+        });
+
+        $.getJSON("/getallissues",null,function(data){
+            var jsonData = eval(data);
+            $.each(jsonData, function(i, objVal){
+                tmpmentiondics=tmpmentiondics.concat(objVal.isid + "-" + objVal.istitle);
+            });
+            $( "#ajaxtitlecom" ).autocomplete({
+                source: tmpmentiondics,
+                select: function(e, ui) {
+                    //跳转到详情页
+                    window.open("http://127.0.0.1:8000/cedis/cedis" + ui.item.value.split("-")[0] +"/detail/");
+                },
+
+                //focus的时候返回false
+                focus: function(e, ui) {
+                    return false;
+                }
+
+            });
+        });
+
+        $.getJSON("/getallkeys",null,function(data){
+            var jsonData = eval(data);
+            $.each(jsonData, function(i, objVal){
+                tmpkeysdics=tmpkeysdics.concat(objVal);
+
+            });
+            $( "#ajaxtagcom" ).autocomplete({
+                    source: tmpkeysdics
+            });
+        });
 
         $(".choosewho").click(function(){
             $("#whoischoosed").attr("value",$(this).text().split(" ")[0]);

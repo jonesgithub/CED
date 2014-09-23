@@ -4,18 +4,34 @@ from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.http import Http404
 from CED_homepage.models import *
+import json
 
 #权限控制封装
 def is_not_admin(view):
-    pass
+    def new_view(request,*args,**kwargs):
+        try:
+            CedEnvAdminGroup.objects.get(envadminname=request.user)
+        except:
+            return HttpResponse("非环境管理员") #暂时处理
+        else:
+            return view(request,*args,**kwargs)
+    return new_view
 
 
 #登陆控制封装
 def requirelogin(view):
-    pass
+    """包装login"""
+    def new_view(request,*args,**kwargs):
+        if request.user.is_authenticated():
+            return view(request,*args,**kwargs)
+        else:
+            return HttpResponseRedirect("/login")
+    return new_view
 
 
 #CED首页
+@requirelogin
+@is_not_admin
 def homepage(request):
     #获取所有issues
     allissues=ced_issues.objects.all()
@@ -55,10 +71,12 @@ def homepage(request):
     )
 
 #用于工具的实时输出
+@requirelogin
 def redis_io_info(request):
     pass
 
 #详情页处理
+@requirelogin
 def ced_issue_detail(request,cedis):
     hasNoEvent=False
 
@@ -86,6 +104,7 @@ def ced_issue_detail(request,cedis):
     )
 
 #显示我的所有事件列表
+@requirelogin
 def ced_show_allmyevents(request):
     hasNoEvent=False
 
@@ -110,6 +129,7 @@ def ced_show_allmyevents(request):
     })
 
 #Ajax推送评论消息
+@requirelogin
 def ced_ajax_addnewcomment(request,cedis):
 
     if request.method == "POST" and request.FILES.get("commentfile"):
@@ -170,6 +190,7 @@ def ced_ajax_addnewcomment(request,cedis):
 
 
 #分类issue筛选
+@requirelogin
 def show_cat_issues(request,cattype):
 
     hasNoEvent=False
@@ -220,6 +241,7 @@ def show_cat_issues(request,cattype):
 
 
 #通知对方的实现,ajax
+@requirelogin
 def ced_ajax_notify(request,cedis):
     """通知对方"""
     if request.method=="POST":
@@ -241,11 +263,13 @@ def ced_ajax_notify(request,cedis):
 
 
 #搜索直达功能
+@requirelogin
 def ced_search_issue(request):
     pass
 
 
 #ajax定时拉取事件
+@requirelogin
 def ced_ajax_get_eventlists(request):
     """返回JSON数据,给前端解析"""
     if request.method=="POST":
@@ -253,6 +277,7 @@ def ced_ajax_get_eventlists(request):
 
 
 #获取英雄榜列表
+@requirelogin
 def ced_get_hero_lists(request):
 
     hasNoEvent=False
@@ -288,6 +313,7 @@ def ced_get_hero_lists(request):
 
 
 #数据展示页面
+@requirelogin
 def ced_show_alldatas(request):
 
     hasNoEvent=False
@@ -317,6 +343,7 @@ def ced_show_alldatas(request):
 
 
 #环境管理员个人设置页面
+@requirelogin
 def ced_person_config(request):
 
     hasNoEvent=False
@@ -349,6 +376,7 @@ def ced_person_config(request):
 
 
 #管理员个人设置页面的ajax接口
+@requirelogin
 def ced_ajax_save_admin_settings(request):
     if request.method=="POST" and request.POST["avatarurl"]!="" and request.POST["status"]!="":
         thisadmin=CedEnvAdminGroup.objects.get(envadminname=request.user)
@@ -365,6 +393,7 @@ def ced_ajax_save_admin_settings(request):
 
 
 #ajax提交新的问题单页面
+@requirelogin
 def ced_ajax_new_issue_submit(request):
 
     hasNoEvent=False
@@ -400,7 +429,7 @@ def ced_ajax_new_issue_submit(request):
         }
     )
 
-
+@requirelogin
 def ced_ajax_save_new_issue(request):
 
     """后端提交新issue的验证"""
@@ -454,7 +483,16 @@ def ced_ajax_save_new_issue(request):
             )
 
             newissue.save() #先保存,加入issuereceivemans,问题单接收人,逻辑为有且只能选择一个
-            newissue.issuereceivemans.add(AuthUser.objects.get(username=request.POST["whoischoosed"]))
+
+            #提交DB之前先判断其是否有空,防止状态变更刷新不及时导致的问题
+            thisadminusr=AuthUser.objects.get(username=request.POST["whoischoosed"])
+            if CedEnvAdminGroup.objects.get(envadminname=thisadminusr).envadminstatus==0:
+                newissue.issuereceivemans.add(thisadminusr)
+            else:
+                newissue.delete() #删除之前的newissue对象,不允许保存
+                return render_to_response("errorinfo.html",
+                        {'errorinfo':u"该管理员目前不可用！"},
+                )
 
             try:
                 #获取分隔后的tag线索，然后加入issuekey
@@ -481,10 +519,36 @@ def ced_ajax_save_new_issue(request):
                     {'errorinfo':u"非法请求!"},
                 )
 
-
+@requirelogin
 def ced_ajax_save_commentfile(request):
     pass
 
+@requirelogin
 def ced_ajax_clear_all_notify(request):
     """消除所有的通知"""
     pass
+
+def ced_ajax_all_issues_info(request):
+    """公共接口，返回所有issues的信息,返回JSON"""
+    istitles=[]
+    allissues=ced_issues.objects.all()
+    for iss in allissues:  # 用于判定是不是同一个issue
+        istitles.append(
+            {
+                'isid':iss.id,
+                'istitle':iss.issuetitle,
+                'istype':iss.issuetypes.issuetype,
+                'iskeys':[thiskey.keyname for thiskey in iss.issuekey.all()]
+            }
+        )
+
+    return HttpResponse(json.dumps(istitles),content_type="application/json")
+
+
+def ced_ajax_all_keys_info(request):
+    """公共接口，返回所有在库的线索信息,返回JSON"""
+    iskeys=[]
+    allkeys=ced_keys.objects.all()
+    for k in allkeys:  # 用于判定是不是同一个issue
+        iskeys.append(k.keyname)
+    return HttpResponse(json.dumps(iskeys),content_type="application/json")

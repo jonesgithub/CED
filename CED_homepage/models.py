@@ -153,6 +153,9 @@ def _cedissue_event_handle(sender,instance,**kwargs):
             #thisevent.user_r.add(revman)
         thisevent.user_r.add(thisissue.issuesubman) #事件收取人为问题提交人
 
+        #加入即时消息回调
+
+
     elif thisissue.issuestatusname==u'已解决':
         thisevent=ced_events(
             user_s=thisissue.issuesubman,
