@@ -54,8 +54,8 @@
             $( "#ajaxtitlecom" ).autocomplete({
                 source: tmpmentiondics,
                 select: function(e, ui) {
-                    //跳转到详情页
-                    window.open("http://127.0.0.1:8000/cedis/cedis" + ui.item.value.split("-")[0] +"/detail/");
+                    //跳转到详情页,相对路径
+                    window.open("../cedis/cedis" + ui.item.value.split("-")[0] +"/detail/");
                 },
 
                 //focus的时候返回false
