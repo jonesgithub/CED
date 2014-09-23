@@ -25,3 +25,7 @@ Django1.7+MySQL+FlatUI
 #### CED工具包
 
 ![CED工具包](/preview/ced-drop.PNG "CED工具包")
+
+#### 智能感知相似问题单
+
+![智能感知](/preview/ced_autocom.PNG "智能感知")
