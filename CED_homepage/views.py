@@ -12,7 +12,9 @@ def is_not_admin(view):
         try:
             CedEnvAdminGroup.objects.get(envadminname=request.user)
         except:
-            return HttpResponse("非环境管理员") #暂时处理
+            return render_to_response("errorinfo.html",
+                    {'errorinfo':u"你无权查看本页面"},
+                ) #暂时处理
         else:
             return view(request,*args,**kwargs)
     return new_view
@@ -31,7 +33,6 @@ def requirelogin(view):
 
 #CED首页
 @requirelogin
-@is_not_admin
 def homepage(request):
     #获取所有issues
     allissues=ced_issues.objects.all()

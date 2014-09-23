@@ -3,12 +3,15 @@
 from django.shortcuts import render
 from django.shortcuts import HttpResponseRedirect,HttpResponse
 from django.shortcuts import render_to_response
+from CED_homepage.views import requirelogin,is_not_admin
 
 #imports
 import requests
 import json
 import xmlrpclib
 
+@requirelogin
+@is_not_admin
 def codesync_home_page(request):
     all_fat_env_info=requests.get("http://192.168.81.146:9001/env/GetEnvSub?envid=1")
     #env_detail_info=requests.get("http://192.168.81.146:9001/env/GetDeployDomainByEnv?envid=112")
@@ -17,14 +20,20 @@ def codesync_home_page(request):
         #'envdetaillist':json.loads(env_detail_info.content)["Configs"]
     })
 
+@requirelogin
+@is_not_admin
 def ajax_get_domainconfig(request,domainname):
     resbody=requests.get("http://192.168.81.146:9001/env/GetDomainConfig?domainname="+domainname)
     return HttpResponse(resbody.content,content_type="application/json") #返回JSON数据
 
+@requirelogin
+@is_not_admin
 def ajax_get_env_detail(request,envid):
     env_detail_info=requests.get("http://192.168.81.146:9001/env/GetDeployDomainByEnv?envid="+envid)
     return HttpResponse(env_detail_info.content,content_type="application/json")
 
+@requirelogin
+@is_not_admin
 def single_site_sync(request):
     """根据syncdst得到src对应的站点,如果无则返回对应信息"""
     if 'sitename' in request.POST and request.POST['sitename']:
@@ -50,5 +59,7 @@ def single_site_sync(request):
         except:
             return HttpResponse(u"Agent连接异常!")
 
+@requirelogin
+@is_not_admin
 def ajax_get_xmlrpc_run_info(request):
     pass
