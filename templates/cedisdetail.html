@@ -1,4 +1,5 @@
 {% extends "homepage.html" %}
+{% load CED_extras %}
 <!DOCTYPE html>
 <html lang="en" xmlns="http://www.w3.org/1999/html">
 {% block head %}
@@ -36,6 +37,27 @@
             });
         });
 
+        //绑定通知事件-通知管理员已完成
+        $("#notifybuttondone").click(function(){
+            $.post("notifyenvmandone/",{},function(result){
+                alert(result);
+                $("#notifybuttondone").hide(500);
+                $("#notifybuttonbo").hide(500);
+            });
+        });
+
+
+        //绑定通知事件-通知管理员驳回单子
+        $("#notifybuttonbo").click(function(){
+            $.post("notifyenvmanbo/",{},function(result){
+                alert(result);
+                $("#notifybuttonbo").hide(500);
+                $("#notifybuttondone").hide(500);
+            });
+        });
+
+
+
     });
     </script>
   </head>
@@ -63,18 +85,26 @@
                 {% ifequal thiscedis.issuestatus 1 %}
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-danger">{{ thiscedis.issuestatusname }}</span></h4>
-                    <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">通知对方已解决</button>
+                        {% if isadmin %}
+                        <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">通知对方已解决</button>
+                        {% endif %}
                     </a>
                     {% else %}
                         {% ifequal thiscedis.issuestatus 4 %}
                             <a class="list-group-item">
                             <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-warning">{{ thiscedis.issuestatusname }}</span></h4>
-                            <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">再次通知对方已解决</button>
+                               {% if isadmin %}
+                                <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">再次通知对方已解决</button>
+                                {% endif %}
                             </a>
                             {% else %}
                                 {% ifequal thiscedis.issuestatus 2 %}
                                     <a class="list-group-item">
                                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-info">{{ thiscedis.issuestatusname }}</span></h4>
+                                    {% if issubman %}
+                                        <button class="btn btn-embossed btn-success btn-xs" id="notifybuttondone">验证通过,通知对方</button>
+                                        <button class="btn btn-embossed btn-danger btn-xs" id="notifybuttonbo">验证失败,我要驳回</button>
+                                    {% endif %}
                                     </a>
                                     {% else %}
                                         {% ifequal thiscedis.issuestatus 3 %}
@@ -107,12 +137,12 @@
                     </a>
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>提交人</h4>
-                    <p class="list-group-item-text">{{ thiscedis.issuesubman }}</p>
+                    <p class="list-group-item-text">{{ thiscedis.issuesubman | getUsername }}</p>
                     </a>
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>委托处理人</h4>
                         {% for recman in thiscedis.issuereceivemans.all %}
-                            <p class="list-group-item-text">{{ recman }}</p>
+                            <p class="list-group-item-text">{{ recman | getUsername }}</p>
                         {% endfor %}
                     </a>
                     <a class="list-group-item">

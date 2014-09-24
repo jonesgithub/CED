@@ -1,4 +1,5 @@
 {% extends "homepage.html" %}
+{% load CED_extras %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -59,7 +60,7 @@
         <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">* 类型 <span class="caret"></span></button>
         <ul class="dropdown-menu cedtypes" role="menu">
             {% for cedtype in allcedtypes %}
-                <li><a href="#">{{ cedtype }}</a></li>
+                <li><a style="cursor: pointer;">{{ cedtype }}</a></li>
             {% endfor %}
         </ul>
       </div><!-- /btn-group -->
@@ -90,9 +91,9 @@
     <div class="input-group">
                     {% for hero in heros %}
                     {% ifequal hero.envadminstatus 0 %}
-                    <label class="btn btn-success btn-sm choosewho">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
+                    <label class="btn btn-success btn-sm choosewho">{{ hero.envadminname | getUsername }} {{ hero.envadmingroup }}</label>
                     {% else %}
-                    <label class="btn btn-danger btn-sm choosewho" disabled="true">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
+                    <label class="btn btn-danger btn-sm choosewho" disabled="true">{{ hero.envadminname | getUsername }} {{ hero.envadmingroup }}</label>
                     {% endifequal %}
                     {% endfor %}
                 </div>

@@ -1,3 +1,4 @@
+{% load CED_extras %}
 <!DOCTYPE html>
 <html lang="en">
 {% block head %}
@@ -79,6 +80,13 @@
 
         $(".choosewho").click(function(){
             $("#whoischoosed").attr("value",$(this).text().split(" ")[0]);
+        });
+
+        $("#markallread").click(function(){
+            //标记为已读
+            $.post("/markallreaded/",function(data){
+                $("#eventslistinfo").fadeOut(1000);
+            })
         });
 
         $(".cedtypes li").click(function(){
@@ -316,9 +324,11 @@
 
         <ul class="nav navbar-nav navbar-right" style="margin-right: 30px !important;">
         <li class="dropdown">
-          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Welcome，{{ curuser.username }} <span class="label"><img src="/static/images/spidertocat.png" width="16" height="16"></span><span class="caret"></span></a>
+          <a href="#" class="dropdown-toggle" data-toggle="dropdown">Welcome，{{ curuser.username | getUsername }} <span class="label"><img src="/static/images/spidertocat.png" width="16" height="16"></span><span class="caret"></span></a>
           <ul class="dropdown-menu" role="menu">
+              {% if isadmin %}
             <li><a href="/adminsettings"><span class="glyphicon glyphicon-wrench"></span>我的设置</a></li>
+              {% endif %}
             <li><a href="/ajaxnewissue"><span class="glyphicon glyphicon-edit"></span>创建新的问题单</a></li>
           </ul>
         </li>
@@ -337,6 +347,7 @@
       {% block sidenav %}
         <div class="col-sm-3 col-md-2 sidebar">
           <!-- <span id="cutsidebar">-</span> -->
+            {% if isadmin %}
           <ul class="nav nav-sidebar">
             <li><a href="#">- 作为管理员</a></li>
             <li class="divider"></li>
@@ -346,14 +357,30 @@
             <li><a href="/categories/4"><span class="glyphicon glyphicon-remove-sign"></span>我被驳回的</a></li>
             <li><a href="#">- 作为提交人</a></li>
             <li class="divider"></li>
-            <li><a href=""><span class="glyphicon glyphicon-upload"></span>我已提交的</a></li>
-            <li><a href=""><span class="glyphicon glyphicon-repeat"></span>待我验证的</a></li>
-            <li><a href=""><span class="glyphicon glyphicon-ok"></span>已被解决的</a></li>
+            <li><a href="/categories/mine/2"><span class="glyphicon glyphicon-repeat"></span>待我验证的</a></li>
+            <li><a href="/categories/mine/3"><span class="glyphicon glyphicon-ok"></span>已被解决的</a></li>
           </ul>
+                {% else %}
+                <ul class="nav nav-sidebar">
+            <li><a href="#">- 作为提交人</a></li>
+            <li class="divider"></li>
+            <li><a href="/categories/mine/2"><span class="glyphicon glyphicon-repeat"></span>待我验证的</a></li>
+            <li><a href="/categories/mine/3"><span class="glyphicon glyphicon-ok"></span>已被解决的</a></li>
+          </ul>
+        {% endif %}
         </div>
        {% endblock %}
+
+
         <div class="col-sm-9 col-sm-offset-3 col-md-10 col-md-offset-2 main">
 
+            <div class="jumbotron">
+                <h3>Ctrip TestingEnvironment Doctor</h3>
+                <p>携程旅行网/酒店研发部/测试架构组 测试环境诊断中心 CED</p>
+                <p><a class="btn btn-success btn-lg" role="button" href="/ajaxnewissue"><span class="glyphicon glyphicon-pencil"></span>提交新问题单</a> <a class="btn btn-danger btn-lg" role="button" href="https://github.com/qddegtya/CED/issues" target="_blank"><span class="glyphicon glyphicon-briefcase"></span>意见与反馈</a> </p>
+            </div>
+
+          {% if isadmin %}
           <div class="row placeholders">
             <div class="col-xs-6 col-sm-3 placeholder">
                 <div class="panel panel-success">
@@ -397,6 +424,8 @@
             </div>
           </div>
 
+          {% endif %}
+
           <div class="table-responsive">
             <table class="table table-striped">
               <thead>
@@ -410,11 +439,13 @@
                   <th>快速操作</th>
                 </tr>
               </thead>
+
+             {% if isadmin %}
               <tbody>
               {% for issue in Allissues %}
                 <tr>
                   <td>{{ issue.issueid }}</td>
-                  <td>{{ issue.issuesubman }}</td>
+                  <td>{{ issue.issuesubman | getUsername }}</td>
                   <td><a href="{{ issue.issuedetailurl }}" title="查看详情" class="viewdetail">{{ issue.issuetitle | truncatechars:'20' }}</a></td>
                   <td>{{ issue.issuecreatetime | date:"Y-m-d H:i:s"  }}</td>
                   <td>
@@ -453,6 +484,51 @@
                 </tr>
               {% endfor %}
               </tbody>
+                 {% else %}
+                  <tbody>
+              {% for issue in isnotadminissues %}
+                <tr>
+                  <td>{{ issue.issueid }}</td>
+                  <td>{{ issue.issuesubman | getUsername }}</td>
+                  <td><a href="{{ issue.issuedetailurl }}" title="查看详情" class="viewdetail">{{ issue.issuetitle | truncatechars:'20' }}</a></td>
+                  <td>{{ issue.issuecreatetime | date:"Y-m-d H:i:s"  }}</td>
+                  <td>
+                      {% ifequal issue.issuestatus 1 %}
+                      <span class="label label-danger">未解决</span>
+                       {% else %}
+                          {% ifequal issue.issuestatus 3 %}
+                              <span class="label label-success">已解决</span>
+                              {% else %}
+                                {% ifequal issue.issuestatus 2 %}
+                                    <span class="label label-info">待我验证的</span>
+                                    {% else %}
+                                        {% ifequal issue.issuestatus 4 %}
+                                            <span class="label label-warning">我驳回的</span>
+                                    {% endifequal %}
+                                {% endifequal %}
+                           {% endifequal %}
+                      {% endifequal %}
+                  </td>
+                  <td><a href="{{ issue.issuedetailurl }}" title="查看 {{ issue.issueid }} 问题单的详情信息" id="viewdetail"><button class="btn btn-embossed btn-primary btn-xs"><span class="glyphicon glyphicon-list-alt"></span>查看详情</button></a></td>
+                  {% ifequal issue.issuestatus 1 %}
+                      <td><a title="邮件提醒对方" class="emailnotity"><span class="glyphicon glyphicon-envelope"></span></a></td>
+                       {% else %}
+                          {% ifequal issue.issuestatus 3 %}
+                              <td><a title="邮件提醒对方" class="emailnotity-no"><span class="glyphicon glyphicon-envelope"></span></a></td>
+                              {% else %}
+                                {% ifequal issue.issuestatus 2 %}
+                                    <td><a title="邮件提醒对方" class="emailnotity-no"><span class="glyphicon glyphicon-envelope"></span></a></td>
+                                    {% else %}
+                                        {% ifequal issue.issuestatus 4 %}
+                                            <td><a title="邮件提醒对方" class="emailnotity"><span class="glyphicon glyphicon-envelope"></span></a></td>
+                                    {% endifequal %}
+                                {% endifequal %}
+                           {% endifequal %}
+                      {% endifequal %}
+                </tr>
+              {% endfor %}
+              </tbody>
+            {% endif %}
             </table>
           </div>
         </div>

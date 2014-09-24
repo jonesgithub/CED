@@ -38,6 +38,17 @@ def homepage(request):
     allissues=ced_issues.objects.all()
     allevents=ced_events.objects.all()
     hasNoEvent=False
+    ISADMIN = False
+
+    # 专门为非管理员准备的数据
+    isnotadminissues=ced_issues.objects.filter(issuesubman=request.user)
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
 
     myevents=[] # 收集我的事件
     for event in allevents:
@@ -67,6 +78,8 @@ def homepage(request):
             'myeventsnum':myeventsnum,
             'hasEvent':hasNoEvent,
             'curuser':request.user,
+            'isadmin':ISADMIN,
+            'isnotadminissues':isnotadminissues,
         }
 
     )
@@ -81,6 +94,16 @@ def redis_io_info(request):
 def ced_issue_detail(request,cedis):
     hasNoEvent=False
 
+    ISADMIN = False
+    ISSUBMAN=False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
+
     #获取到id
     cedisid=cedis[5:]
     allevents=ced_events.objects.all()
@@ -94,6 +117,12 @@ def ced_issue_detail(request,cedis):
     if myeventsnum==0:
         hasNoEvent=True
     cedisone=ced_issues.objects.get(id=cedisid)
+
+    if cedisone.issuesubman.username == request.user.username:
+        ISSUBMAN=True
+    else:
+        ISSUBMAN=False
+
     return render_to_response("cedisdetail.html",
         {
             "thiscedis":cedisone,
@@ -101,6 +130,8 @@ def ced_issue_detail(request,cedis):
             'myeventsnum':myeventsnum,
             'hasEvent':hasNoEvent,
             'curuser':request.user,
+            'isadmin':ISADMIN,
+            'issubman':ISSUBMAN,
         }
     )
 
@@ -108,6 +139,15 @@ def ced_issue_detail(request,cedis):
 @requirelogin
 def ced_show_allmyevents(request):
     hasNoEvent=False
+
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
 
     #获取我所有的事件信息
     allevents=ced_events.objects.all()
@@ -127,6 +167,7 @@ def ced_show_allmyevents(request):
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
             'curuser':request.user,
+            'isadmin':ISADMIN,
     })
 
 #Ajax推送评论消息
@@ -196,6 +237,15 @@ def show_cat_issues(request,cattype):
 
     hasNoEvent=False
 
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
+
     """分类显示"""
     try:
         u_issue_status=int(cattype)
@@ -234,6 +284,70 @@ def show_cat_issues(request,cattype):
                 'myeventsnum':myeventsnum,
                 'hasEvent':hasNoEvent,
                 'curuser':request.user,
+                'isadmin':ISADMIN,
+
+            }
+
+        )
+    except:
+        return Http404()
+
+
+#分类issue mine 显示，即只显示提交人为自己的单子
+@requirelogin
+def show_cat_issues_mine(request,cattype):
+
+    hasNoEvent=False
+
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
+
+    """分类显示"""
+    try:
+        u_issue_status=int(cattype)
+        c_issues=ced_issues.objects.all().filter(issuestatus=u_issue_status,issuesubman=request.user)
+
+        #获取所有issues
+        allissues=ced_issues.objects.all()
+        allevents=ced_events.objects.all()
+
+        myevents=[] #收集我的事件
+        for event in allevents:
+            #只显示我的事件
+            if len(event.user_r.all().filter(username=request.user.username))!=0:
+                myevents.append(event)
+
+        myeventsnum=len(myevents) #事件总数
+
+        if myeventsnum==0:
+            hasNoEvent=True
+
+        #获取相关数据
+        issue_done_num=allissues.filter(issuestatus=3).count()
+        issue_wait_num=allissues.filter(issuestatus=2).count()
+        issue_undo_num=allissues.filter(issuestatus=1).count()
+        issue_rollback_num=allissues.filter(issuestatus=4).count()
+
+        return render_to_response(
+            "homepage.html",
+            {
+                'Allissues':c_issues,
+                'issuedone':issue_done_num,
+                'issueundo':issue_undo_num,
+                'issuewait':issue_wait_num,
+                'issuerollback':issue_rollback_num,
+                'myevents':myevents[0:10],
+                'myeventsnum':myeventsnum,
+                'hasEvent':hasNoEvent,
+                'curuser':request.user,
+                'isadmin':ISADMIN,
+
             }
 
         )
@@ -243,12 +357,13 @@ def show_cat_issues(request,cattype):
 
 #通知对方的实现,ajax
 @requirelogin
+@is_not_admin
 def ced_ajax_notify(request,cedis):
     """通知对方"""
+    thisissue_id=cedis[5:]
+    thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
+    thisissue_current_status=thisissue.issuestatus
     if request.method=="POST":
-        thisissue_id=cedis[5:]
-        thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
-        thisissue_current_status=thisissue.issuestatus
         if thisissue_current_status==2 or thisissue_current_status==3:
             return HttpResponse(u"当前状态无需通知！")
         else:
@@ -259,6 +374,53 @@ def ced_ajax_notify(request,cedis):
                 return HttpResponse(u"通知过程中发生异常")
             else:
                 return HttpResponse(u"通知成功,请等待对方确认!")
+    else:
+        return HttpResponse(u"非法请求")
+
+
+
+#通知对方已解决的ajax
+@requirelogin
+def ced_ajax_notify_done(request,cedis):
+    """用于非管理员通知管理员已解决"""
+    thisissue_id=cedis[5:]
+    thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
+    thisissue_current_status=thisissue.issuestatus
+    if request.method=="POST" and thisissue.issuesubman.username == request.user.username:
+        if thisissue_current_status==3 or thisissue_current_status==1 or thisissue_current_status==4:  # 新建单子不能随便关闭
+            return HttpResponse(u"当前状态无需通知！")
+        else:
+            try:
+                thisissue.issuestatus=3 #置为已解决
+                thisissue.save() #保存并触发事件通知
+            except:
+                return HttpResponse(u"通知过程中发生异常")
+            else:
+                return HttpResponse(u"该问题单被成功关闭！")
+    else:
+        return HttpResponse(u"非法请求")
+
+
+#用于非管理员驳回的ajax
+@requirelogin
+def ced_ajax_notify_bo(request,cedis):
+    """用于非管理员驳回的ajax"""
+    thisissue_id=cedis[5:]
+    thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
+    thisissue_current_status=thisissue.issuestatus
+
+    if request.method=="POST" and thisissue.issuesubman.username == request.user.username:
+
+        if thisissue_current_status==3 or thisissue_current_status==1 or thisissue_current_status==4: #  新建单子不能随便驳回
+            return HttpResponse(u"当前状态无需通知！")
+        else:
+            try:
+                thisissue.issuestatus=4 #置为驳回
+                thisissue.save() #保存并触发事件通知
+            except:
+                return HttpResponse(u"通知过程中发生异常")
+            else:
+                return HttpResponse(u"成功驳回该单子！")
     else:
         return HttpResponse(u"非法请求")
 
@@ -282,6 +444,15 @@ def ced_ajax_get_eventlists(request):
 def ced_get_hero_lists(request):
 
     hasNoEvent=False
+
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
 
     #获取我所有的事件信息
     allevents = ced_events.objects.all()
@@ -308,6 +479,7 @@ def ced_get_hero_lists(request):
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
             'curuser':request.user,
+            'isadmin':ISADMIN,
 
         }
     )
@@ -318,6 +490,15 @@ def ced_get_hero_lists(request):
 def ced_show_alldatas(request):
 
     hasNoEvent=False
+
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
 
     #获取我所有的事件信息
     allevents = ced_events.objects.all()
@@ -339,12 +520,14 @@ def ced_show_alldatas(request):
             'hasEvent':hasNoEvent,
             'myallevents':myevents,
             'curuser':request.user,
+            'isadmin':ISADMIN,
         }
     )
 
 
 #环境管理员个人设置页面
 @requirelogin
+@is_not_admin
 def ced_person_config(request):
 
     hasNoEvent=False
@@ -399,6 +582,15 @@ def ced_ajax_new_issue_submit(request):
 
     hasNoEvent=False
 
+    ISADMIN = False
+
+    try:
+        CedEnvAdminGroup.objects.get(envadminname=request.user)
+    except:
+        ISADMIN=False
+    else:
+        ISADMIN=True
+
     allcedtypes=ced_types.objects.all()
 
     #获取我所有的事件信息
@@ -426,6 +618,7 @@ def ced_ajax_new_issue_submit(request):
             'myallevents':myevents,
             'curuser':request.user,
             'allcedtypes':allcedtypes,
+            'isadmin':ISADMIN,
 
         }
     )
@@ -553,3 +746,20 @@ def ced_ajax_all_keys_info(request):
     for k in allkeys:  # 用于判定是不是同一个issue
         iskeys.append(k.keyname)
     return HttpResponse(json.dumps(iskeys),content_type="application/json")
+
+
+@requirelogin
+def ced_markall_readed(request):
+    # 开始删除,保证删的是自己的事件单，并不影响单子本身
+    for event in ced_events.objects.all():
+        if len(event.user_r.all().filter(username=request.user.username)) != 0:
+            try:
+                event.delete()
+            except:
+                continue
+    return HttpResponse("已全部标记为已读!")
+
+
+def ced_help(request):
+    """CED help"""
+    pass

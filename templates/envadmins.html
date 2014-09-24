@@ -1,4 +1,5 @@
 {% extends "homepage.html" %}
+{% load CED_extras %}
 
 <!DOCTYPE html>
 <html lang="en">
@@ -30,7 +31,7 @@
 
                     <div class="herocard-left">
                     <img src="{{ hero.envadminavatar }}" width="64" height="64" class="envadminavatar">
-                    <p class="list-group-item-text envadminname">{{ hero.envadminname }}</p>
+                    <p class="list-group-item-text envadminname">{{ hero.envadminname | getUsername }}</p>
                     </div>
 
                     <div class="herocard-right">

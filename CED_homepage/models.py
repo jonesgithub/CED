@@ -7,6 +7,13 @@ from django.contrib.contenttypes import generic
 from django.dispatch import receiver
 from CED.settings import SITE_ROOT_URL
 
+def getusername(alias):
+    try:
+        myusername=UserInfo.objects.using('reportplatform').get(useralias=alias).username
+    except UserInfo.DoesNotExist:
+        myusername=AuthUser.objects.using('default').get(username=alias).username
+    return myusername
+
 #导入的模型-用户
 class AuthUser(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -144,7 +151,7 @@ def _cedissue_event_handle(sender,instance,**kwargs):
             user_s=thisissue.issuereceivemans.all()[0], #只允许选择一个环境处理人/永远为当前那个
             event_object=thisissue,
             eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】解决了问题单【%s】，请及时反馈！</a>" %
-                  (thisissue.issuedetailurl,thisissue.issuereceivemans.all()[0],thisissue.issuetitle[:10]+u"......")
+                  (thisissue.issuedetailurl,getusername(thisissue.issuereceivemans.all()[0]),thisissue.issuetitle[:10]+u"......")
             )
         )
         thisevent.save() #保存这条事件,顺序在前
@@ -161,7 +168,7 @@ def _cedissue_event_handle(sender,instance,**kwargs):
             user_s=thisissue.issuesubman,
             event_object=thisissue,
             eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】确认了问题单【%s】已解决！</a>" %
-                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+                  (thisissue.issuedetailurl,getusername(thisissue.issuesubman),thisissue.issuetitle[:10]+u"......")
             )
         )
         thisevent.save() #保存这条事件,顺序在前
@@ -174,7 +181,7 @@ def _cedissue_event_handle(sender,instance,**kwargs):
             user_s=thisissue.issuesubman,
             event_object=thisissue,
             eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】驳回了问题单【%s】，请尝试再次解决！</a>" %
-                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+                  (thisissue.issuedetailurl,getusername(thisissue.issuesubman),thisissue.issuetitle[:10]+u"......")
             )
         )
         thisevent.save() #保存这条事件,顺序在前
@@ -188,12 +195,32 @@ def _cedissue_event_handle(sender,instance,**kwargs):
             user_s=thisissue.issuesubman,
             event_object=thisissue,
             eventdes=(u"<a href='%s' title='查看问题单详情' target='_blank'>【%s】提交了一个新的问题单【%s】！</a>" %
-                  (thisissue.issuedetailurl,thisissue.issuesubman,thisissue.issuetitle[:10]+u"......")
+                  (thisissue.issuedetailurl,getusername(thisissue.issuesubman),thisissue.issuetitle[:10]+u"......")
             )
         )
         thisevent.save() #保存这条事件,顺序在前
         #加入事件收取人
         for revman in thisissue.issuereceivemans.all():
             thisevent.user_r.add(revman)
+
+#reportplatform models
+class UserInfo(models.Model):
+    userid = models.BigIntegerField(db_column='UserID', primary_key=True) # Field name made lowercase.
+    groupid = models.IntegerField(db_column='GroupID', blank=True, null=True) # Field name made lowercase.
+    departmentno = models.IntegerField(db_column='DepartmentNO', blank=True, null=True) # Field name made lowercase.
+    username = models.CharField(db_column='UserName', max_length=50) # Field name made lowercase.
+    useralias = models.CharField(db_column='UserAlias', unique=True, max_length=50) # Field name made lowercase.
+    userrole = models.CharField(db_column='UserRole', max_length=1) # Field name made lowercase.
+    userstatus = models.CharField(db_column='UserStatus', max_length=1) # Field name made lowercase.
+    gmtcreate = models.DateTimeField(db_column='GmtCreate') # Field name made lowercase.
+    gmtmodified = models.DateTimeField(db_column='GmtModified', blank=True, null=True) # Field name made lowercase.
+
+    class Meta:
+        managed = False
+        db_table = 'user_info'
+
+    def __unicode__(self):
+        return self.username
+
 
 #注册监听comments的监听事件,当发表评论和回复评论时触发
