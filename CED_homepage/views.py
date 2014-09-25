@@ -642,7 +642,7 @@ def ced_ajax_save_new_issue(request):
 
         if request.POST["newistitle"]=="" or len(request.POST["newistitle"])>50: #判断标题是否为空或过长
             return render_to_response("errorinfo.html",
-                        {'errorinfo':u"标题不能为空,字数少于50！"},
+                        {'errorinfo':u"标题不能为空,且长度不得超过50！"},
                 )
         elif request.POST["newisdes"]=="": #判断描述是否为空
             return render_to_response("errorinfo.html",
