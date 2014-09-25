@@ -824,3 +824,7 @@ def email_notify_someone(request):
             return HttpResponse(u"催单成功！")
     else:
         return HttpResponse(u"非法操作!")
+
+
+def ced_logout(request):
+    pass
