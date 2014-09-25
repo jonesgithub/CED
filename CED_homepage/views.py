@@ -5,6 +5,14 @@ from django.http import HttpResponseRedirect
 from django.http import Http404
 from CED_homepage.models import *
 import json
+from suds.client import Client
+from CED.settings import RECLIST,EMAILWSURL,SITE_ROOT_URL
+
+#封装邮件发送函数
+def send_html_mail(subject, html_content, sender,recipient_list,wsurl):
+    #调用webservice的接口发送邮件
+    sendemailclient=Client(url=wsurl)
+    sendemailclient.service.SendMailWithHtml2(title=subject,body=html_content,sender=sender,AddressList=recipient_list)
 
 #权限控制封装
 def is_not_admin(view):
@@ -632,9 +640,9 @@ def ced_ajax_save_new_issue(request):
 
     if request.method == "POST":
 
-        if request.POST["newistitle"]=="": #判断标题是否为空
+        if request.POST["newistitle"]=="" or len(request.POST["newistitle"])>50: #判断标题是否为空或过长
             return render_to_response("errorinfo.html",
-                        {'errorinfo':u"标题不能为空！"},
+                        {'errorinfo':u"标题不能为空,字数少于50！"},
                 )
         elif request.POST["newisdes"]=="": #判断描述是否为空
             return render_to_response("errorinfo.html",
@@ -763,3 +771,56 @@ def ced_markall_readed(request):
 def ced_help(request):
     """CED help"""
     pass
+
+
+def email_notify_someone(request):
+    ISADMIN = False
+    RECLIST=[] #清空收件人
+
+    """ajax邮件提醒,催促通知"""
+    if request.method == "POST" and request.POST["emailis"] != "":
+        try:
+            CedEnvAdminGroup.objects.get(envadminname=request.user)
+        except:
+            ISADMIN=False
+        else:
+            ISADMIN=True
+
+        #先获取这个issue,然后获得issue的相关人员
+        thisissue_id=request.POST["emailis"][5:]
+        thisissue=ced_issues.objects.get(id=thisissue_id) #定位该问题单
+
+        SENDER=request.user.username + "@Ctrip.com"
+
+        if ISADMIN:
+            #加入收件人列表
+            RECLIST.append(thisissue.issuesubman.username+"@Ctrip.com")
+        else:
+            RECLIST.append(thisissue.issuereceivemans.all()[0].username+"@Ctrip.com")
+
+        EMAILBODY=u"""
+         <table style="border:2px solid #f0f0f0;">
+              <thead style="font-size:16px;color:#cccccc;">
+                <tr style="border-bottom:1px solid #f0f0f0;">
+                  <th>问题单号</th>
+                  <th>问题单链接</th>
+                </tr>
+              </thead>
+
+              <tbody style="font-size:16px;color:#cccccc;">
+                <tr>
+                    <td>cedis17</td>
+                    <td><a href="%s" style="color:#cccccc;">点我进入处理</a></td>
+                </tr>
+              </tbody>
+        </table>
+        <span style="font-size:12px;color:#333333;">FROM CED 请尽快处理一下这个单子！</span>
+        """ % (SITE_ROOT_URL+thisissue.issuedetailurl)
+        try:
+            send_html_mail(u'【CED 催单邮件 From ' + SENDER + u' 】',EMAILBODY,SENDER,RECLIST[0],EMAILWSURL)
+        except:
+            return HttpResponse(u"邮件服务当前不可用,请联系邮件服务器管理员")
+        else:
+            return HttpResponse(u"催单成功！")
+    else:
+        return HttpResponse(u"非法操作!")

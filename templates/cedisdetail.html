@@ -170,7 +170,7 @@
                 <div class="list-group issuedetail">
                     {% for comment in thiscedis.issuecomments.all %}
                     <div class="list-group-item">
-                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>{{ comment.commentman }} - <span style="font-size: 12px;">{{ comment.commentdate | date:"Y-m-d H:i:s"  }}</span></h4>
+                    <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-user"></span>{{ comment.commentman | getUsername }} - <span style="font-size: 12px;">{{ comment.commentdate | date:"Y-m-d H:i:s"  }}</span></h4>
                     <div class="list-group-item-text commentcontent"><pre class="commentpre">{{ comment.comment }}</pre></div>
                         {% ifnotequal comment.commentattach "" %}
                     <div class="list-group-item-text commentattach"><p class="list-group-item-text"><a href="{{ MEDIA_URL }}{{ comment.commentattach.url }}" title="查看大图" target="_blank"><img src="{{ MEDIA_URL }}{{ comment.commentattach.url }}" class="thumbnail cedattachimg"></a></p></div>

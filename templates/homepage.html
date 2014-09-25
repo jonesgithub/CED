@@ -149,7 +149,11 @@
 
         $(".emailnotity").click(function(){
             //请求发送邮件
-            alert("发送邮件");
+            //获取当前cedis号
+            var cedisid=$(this).parent().parent().find("td:eq(0)").text();
+            $.post("/emailit/",{emailis:cedisid},function(data){
+                alert(data);
+            })
         });
 
         $(".delissue").click(function(){

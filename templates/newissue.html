@@ -91,9 +91,9 @@
     <div class="input-group">
                     {% for hero in heros %}
                     {% ifequal hero.envadminstatus 0 %}
-                    <label class="btn btn-success btn-sm choosewho">{{ hero.envadminname | getUsername }} {{ hero.envadmingroup }}</label>
+                    <label class="btn btn-success btn-sm choosewho">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
                     {% else %}
-                    <label class="btn btn-danger btn-sm choosewho" disabled="true">{{ hero.envadminname | getUsername }} {{ hero.envadmingroup }}</label>
+                    <label class="btn btn-danger btn-sm choosewho" disabled="true">{{ hero.envadminname }} {{ hero.envadmingroup }}</label>
                     {% endifequal %}
                     {% endfor %}
                 </div>
