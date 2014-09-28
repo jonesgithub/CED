@@ -43,10 +43,11 @@ def requirelogin(view):
 @requirelogin
 def homepage(request):
     #获取所有issues
-    allissues=ced_issues.objects.all()
+    allissues=ced_issues.objects.filter(issuereceivemans=request.user)
     allevents=ced_events.objects.all()
     hasNoEvent=False
     ISADMIN = False
+    MYISSUES=[] #过滤掉非本人处理的单子
 
     # 专门为非管理员准备的数据
     isnotadminissues=ced_issues.objects.filter(issuesubman=request.user)
@@ -88,6 +89,7 @@ def homepage(request):
             'curuser':request.user,
             'isadmin':ISADMIN,
             'isnotadminissues':isnotadminissues,
+            'myissues':MYISSUES,
         }
 
     )
@@ -104,6 +106,7 @@ def ced_issue_detail(request,cedis):
 
     ISADMIN = False
     ISSUBMAN=False
+    ISCURADMIN=False #是否为当前受理人
 
     try:
         CedEnvAdminGroup.objects.get(envadminname=request.user)
@@ -126,6 +129,11 @@ def ced_issue_detail(request,cedis):
         hasNoEvent=True
     cedisone=ced_issues.objects.get(id=cedisid)
 
+    if cedisone.issuereceivemans.all()[0].username == request.user.username:
+        ISCURADMIN=True
+    else:
+        ISCURADMIN=False
+
     if cedisone.issuesubman.username == request.user.username:
         ISSUBMAN=True
     else:
@@ -140,6 +148,7 @@ def ced_issue_detail(request,cedis):
             'curuser':request.user,
             'isadmin':ISADMIN,
             'issubman':ISSUBMAN,
+            'iscuradmin':ISCURADMIN,
         }
     )
 
@@ -257,10 +266,10 @@ def show_cat_issues(request,cattype):
     """分类显示"""
     try:
         u_issue_status=int(cattype)
-        c_issues=ced_issues.objects.all().filter(issuestatus=u_issue_status)
+        c_issues=ced_issues.objects.filter(issuestatus=u_issue_status,issuereceivemans=request.user)
 
         #获取所有issues
-        allissues=ced_issues.objects.all()
+        allissues=ced_issues.objects.filter(issuereceivemans=request.user)
         allevents=ced_events.objects.all()
 
         myevents=[] #收集我的事件
@@ -374,6 +383,8 @@ def ced_ajax_notify(request,cedis):
     if request.method=="POST":
         if thisissue_current_status==2 or thisissue_current_status==3:
             return HttpResponse(u"当前状态无需通知！")
+        elif thisissue.issuereceivemans.all()[0].username != request.user.username:
+            return HttpResponse(u"你不是当前治理人，没有权限！")
         else:
             try:
                 thisissue.issuestatus=2 #置为待确认

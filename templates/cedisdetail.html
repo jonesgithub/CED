@@ -85,7 +85,7 @@
                 {% ifequal thiscedis.issuestatus 1 %}
                     <a class="list-group-item">
                     <h4 class="list-group-item-heading"><span class="glyphicon glyphicon-bullhorn"></span>当前状态：<span class="label label-danger">{{ thiscedis.issuestatusname }}</span></h4>
-                        {% if isadmin %}
+                        {% if isadmin and iscuradmin %}
                         <button class="btn btn-embossed btn-primary btn-xs" id="notifybutton">通知对方已解决</button>
                         {% endif %}
                     </a>
